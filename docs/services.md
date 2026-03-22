@@ -33,9 +33,10 @@ Netwatch monitors 172.17.0.2 every 15 seconds.
 
 ### Syslog
 
-The router forwards logs to Pi-hole on UDP 514 using the default `remote` logging action (action index 3, remote=172.17.0.2).
+The router forwards logs to Pi-hole on UDP 514 using the default `remote`
+logging action (action index 3, remote=172.17.0.2).
 
-Topics sent to Pi-hole (remote): `info`, `firewall`
+Topics sent to Pi-hole (remote): `info`, `firewall`, `warning`, `error`
 
 Topics kept in router memory only: `dhcp`, `pppoe`, `warning`, `firewall`
 
@@ -45,11 +46,36 @@ Topics kept in router memory only: `dhcp`, `pppoe`, `warning`, `firewall`
 
 - **Type**: WireGuard (managed by MikroTik Cloud)
 - **VPN DNS name**: `YOURSERIAL.vpn.mynetname.net`
-- **Port**: 17723 UDP (open in firewall on WAN)
+- **Port**: 65504 UDP (open in firewall on WAN)
 - **Client**: MikroTik smartphone app
 - **Status**: Running, USA1 relay
 
-Allows remote access to the entire home lab from anywhere using the MikroTik app. Connects through MikroTik's relay servers automatically.
+Allows remote access to the entire home lab from anywhere using the MikroTik
+app. Connects through MikroTik's relay servers automatically.
+
+BTH users can reach all VLANs including game servers at 10.20.20.3.
+
+---
+
+## AMP Game Panel (Server2 NIC2 — 10.20.20.3)
+
+AMP (Application Management Panel) runs on Server2's second NIC, dedicated
+to game server traffic.
+
+### Game Servers and Ports
+
+| Game | Protocol | Port | Forwarded from WAN |
+|------|----------|------|--------------------|
+| Minecraft Java | TCP | 25565 | ✅ (pending public IP) |
+| Minecraft Bedrock | UDP | 19132 | ✅ (pending public IP) |
+| Garry's Mod | UDP | 27015 | ✅ (pending public IP) |
+| Garry's Mod RCON | TCP | 27015 | ✅ (pending public IP) |
+| TeamSpeak 6 | UDP | 9987 | ✅ (pending public IP) |
+| TeamSpeak 6 File | TCP | 30033 | ✅ (pending public IP) |
+
+**Note**: ISP is currently CGNAT (WAN IP 10.71.x.x). Port forwarding rules
+are in place and will activate automatically once ISP provides a public IP.
+AMP web panel (port 8080) is LAN-only — not forwarded externally.
 
 ---
 
@@ -91,6 +117,10 @@ usb1-part1/
 └── logs/                      # Router log exports (manual)
 ```
 
+**Note**: Daily RSC backup contains credentials in plaintext (PPPoE username,
+Pi-hole password). The file is stored locally on the USB SSD only — not
+uploaded anywhere. Weekly binary backup is AES-SHA256 encrypted.
+
 ---
 
 ## Scheduled Backups
@@ -104,7 +134,8 @@ usb1-part1/
 
 ## Graphing
 
-Interface traffic graphs enabled for: `pppoe-wan`, `vlan10-server1`, `vlan20-server2`, `vlan30-idrac`, `vlan40-pi`, `vlan60-wifi`
+Interface traffic graphs enabled for: `pppoe-wan`, `vlan10-server1`,
+`vlan20-server2`, `vlan30-idrac`, `vlan40-pi`, `vlan50-av`, `vlan60-wifi`
 
 Access via Winbox → Tools → Graphing.
 
@@ -113,6 +144,8 @@ Access via Winbox → Tools → Graphing.
 ## SNMP
 
 - **Status**: Enabled
+- **Community**: renamed from `public` (stored on router only — not in repo)
+- **Address restriction**: 10.10.10.0/24 and 10.20.20.0/24 only
 - **Contact**: YOUR-EMAIL
 - **Location**: Home Lab
-- Used by mktxp for Grafana metrics export (mktxp_group user: read+api only)
+- Used by mktxp for Grafana metrics export (mktxp_user: read+api only)

@@ -1,7 +1,8 @@
 # Beeper Alert System
 
-The RB3011UiAS has a built-in piezo beeper. RouterOS `:beep` command controls it directly.
-All scripts have `dont-require-permissions=yes` so they can be called from netwatch and schedulers without permission issues.
+The RB3011UiAS has a built-in piezo beeper. RouterOS `:beep` command controls
+it directly. All scripts have `dont-require-permissions=yes` so they can be
+called from netwatch and schedulers without permission issues.
 
 ## Alert Tones
 
@@ -28,10 +29,12 @@ All scripts have `dont-require-permissions=yes` so they can be called from netwa
 
 | Host | Comment | Interval | Down Action | Up Action |
 |------|---------|----------|-------------|-----------|
-| 10.10.10.10 | Server1 | 30s | alert-down + log warning | alert-up + log info |
-| 10.20.20.10 | Server2 | 30s | alert-down + log warning | alert-up + log info |
+| 10.10.10.2 | Server1 | 30s | alert-down + log warning | alert-up + log info |
+| 10.20.20.2 | Server2 | 30s | alert-down + log warning | alert-up + log info |
+| 10.20.20.3 | AMP | 30s | alert-down + log warning | alert-up + log info |
 | 10.30.30.10 | iDRAC1 | 60s | alert-down + log warning | alert-up + log info |
 | 10.30.30.11 | iDRAC2 | 60s | alert-down + log warning | alert-up + log info |
+| 10.40.40.2 | RPi | 60s | alert-down + log warning | alert-up + log info |
 | 8.8.8.8 | WAN | 30s | alert-wan-down + log error | alert-up + log info |
 | 172.17.0.2 | Pi-hole | 15s | alert-down + switch DNS to Google | alert-up + restore DNS to Pi-hole |
 | 10.60.60.200 | mAP2nD-1 | 30s | alert-down + log warning | alert-up + log info |
@@ -39,10 +42,19 @@ All scripts have `dont-require-permissions=yes` so they can be called from netwa
 
 ## DHCP Lease Logging
 
-The `dhcp-new-lease` script is assigned to all six DHCP servers. On each new lease it plays the arpeggio tone and logs:
+The `dhcp-new-lease` script is assigned to all six DHCP servers. On each new
+lease it plays the arpeggio tone and logs:
+
 ```
 New lease: <IP> MAC: <MAC>
 ```
+
+## Script Notes
+
+- `wifi-monitor` uses global variable `$wifiCount` — on first run it
+  initialises and does not beep. Beeps start from the second scheduler cycle.
+- `eth-monitor` uses global variable `$ethStates` — same behaviour on first run.
+- `attack-monitor` uses `$attackCount` — same. No false alarm beep on router boot.
 
 ## Running Mario Manually
 
