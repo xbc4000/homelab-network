@@ -63,9 +63,9 @@ add comment="Main LAN Bridge" igmp-snooping=yes name=bridge-main \
     vlan-filtering=yes
 /interface ethernet
 set [ find default-name=ether1 ] comment="WAN PPPoE Uplink" name=ether1-WAN
-set [ find default-name=ether2 ] comment="Server1 NIC1 primary" name=\
+set [ find default-name=ether2 ] comment="Server1 NIC1 bond primary (eno3)" name=\
     ether2-SRV1-NIC1
-set [ find default-name=ether3 ] comment="Server1 NIC2 spare" name=\
+set [ find default-name=ether3 ] comment="Server1 NIC2 bond slave (eno4)" name=\
     ether3-SRV1-NIC2
 set [ find default-name=ether4 ] comment="Server2 NIC1 primary" name=\
     ether4-SRV2-NIC1
@@ -499,7 +499,7 @@ set data-directory=usb1-part1/dude enabled=yes
 /interface bridge port
 add bridge=bridge-main comment="Server1 NIC1 VLAN10" interface=\
     ether2-SRV1-NIC1 pvid=10
-add bridge=bridge-main comment="Server1 NIC2 spare VLAN10" interface=\
+add bridge=bridge-main comment="Server1 NIC2 bond slave VLAN10" interface=\
     ether3-SRV1-NIC2 pvid=10
 add bridge=bridge-main comment="Server2 NIC1 VLAN20" interface=\
     ether4-SRV2-NIC1 pvid=20

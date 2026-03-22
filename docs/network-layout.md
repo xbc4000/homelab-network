@@ -18,8 +18,8 @@
 | Port | Name | VLAN | Device |
 |------|------|------|--------|
 | ether1 | ether1-WAN | — | ISP PPPoE uplink |
-| ether2 | ether2-SRV1-NIC1 | 10 (untagged) | Server1 NIC1 (primary) |
-| ether3 | ether3-SRV1-NIC2 | 10 (untagged) | Server1 NIC2 (spare) |
+| ether2 | ether2-SRV1-NIC1 | 10 (untagged) | Server1 NIC1 — bond primary (eno3) |
+| ether3 | ether3-SRV1-NIC2 | 10 (untagged) | Server1 NIC2 — bond slave (eno4) |
 | ether4 | ether4-SRV2-NIC1 | 20 (untagged) | Server2 NIC1 (management) |
 | ether5 | ether5-SRV2-NIC2 | 20 (untagged) | Server2 NIC2 (AMP game panel) |
 | ether6 | ether6-iDRAC1 | 30 (untagged) | iDRAC — PER730XD OOB |
@@ -52,7 +52,7 @@
 | Hostname | DNS Name | IP | MAC | VLAN |
 |----------|----------|-----|-----|------|
 | RB3011-GW | router.home | 10.10.10.1 | — | — |
-| PER730XD NIC1 | server1.home | 10.10.10.2 | 24:6E:96:27:91:44 | 10 |
+| PER730XD bond0 | server1.home | 10.10.10.2 | 24:6E:96:27:91:44 (primary) | 10 |
 | PER630 NIC1 | server2.home | 10.20.20.2 | 24:6E:96:AB:39:ED | 20 |
 | PER630 NIC2 (AMP) | amp.home | 10.20.20.3 | 24:6E:96:AB:39:EC | 20 |
 | iDRAC PER730XD | idrac1.home | 10.30.30.10 | 44:A8:42:4B:BF:95 | 30 |
