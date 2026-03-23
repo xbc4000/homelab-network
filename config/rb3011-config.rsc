@@ -432,7 +432,7 @@ add comment="DHCP pool low alert — warns when WiFi pool has fewer than 10 free
 add comment="USB SSD periodic mount check — deep alarm if missing" \
     dont-require-permissions=yes name=usb-periodic-check owner=YOUR-ADMIN-USER \
     policy=read,test source="\
-    \n:if ([:len [/disk find name=usb1-part1]] = 0) do={\
+    \n:if ([:len [/disk find slot=usb1-part1]] = 0) do={\
     \n  :beep frequency=300 length=400ms; :delay 100ms;\
     \n  :beep frequency=300 length=400ms; :delay 100ms;\
     \n  :beep frequency=300 length=800ms;\
@@ -1065,7 +1065,6 @@ add action=drop chain=input comment="[DDOS] Drop NTP amplification" \
 add action=drop chain=input comment="[DDOS] Drop SSDP amplification" \
     dst-port=1900 protocol=udp
 add action=drop chain=input comment="Default drop"
-add action=drop chain=forward comment="[FWD] Default drop all unmatched"
 /ip firewall nat
 add action=masquerade chain=srcnat comment="defconf: masquerade" \
     ipsec-policy=out,none out-interface-list=WAN

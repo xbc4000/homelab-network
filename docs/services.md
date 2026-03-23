@@ -112,7 +112,8 @@ usb1-part1/
 │       └── log/               # Pi-hole /var/log/pihole (query logs)
 ├── backups/
 │   ├── daily/                 # Daily RSC config export (runs at 03:00)
-│   └── weekly/                # Weekly encrypted binary backup (runs at 02:00 Monday)
+│   ├── weekly/                # Weekly encrypted binary backup (runs at 02:00 Fridays)
+│   └── pre-update/            # Encrypted backup taken automatically before any RouterOS upgrade
 ├── dude/                      # The Dude database and config
 └── logs/                      # Router log exports (manual)
 ```
@@ -128,7 +129,8 @@ uploaded anywhere. Weekly binary backup is AES-SHA256 encrypted.
 | Scheduler | Time | Type | Output |
 |-----------|------|------|--------|
 | `daily-backup` | 03:00 daily | RSC text export | `usb1-part1/backups/daily/rb3011-config.rsc` |
-| `weekly-backup` | 02:00 Monday | AES-SHA256 encrypted binary | `usb1-part1/backups/weekly/rb3011-full.backup` |
+| `weekly-backup` | 02:00 weekly (Fridays) | AES-SHA256 encrypted binary | `usb1-part1/backups/weekly/rb3011-full.backup` |
+| `auto-update` (pre-update) | Before any RouterOS install | AES-SHA256 encrypted binary | `usb1-part1/backups/pre-update/rb3011-pre-update.backup` |
 
 ---
 

@@ -243,12 +243,107 @@ Test a script manually:
 
 ---
 
+## Beeper Not Working From Scheduler
+
+**Root cause**: RouterOS 7.22 restricts `:beep` to the **absolute top level**
+of a scheduler's `on-event`. It silently fails inside any `do={}` block —
+including `if/do`, nested closures, or any conditional. No error is logged;
+the script stops at the beep line.
+
+**Why**: RouterOS grants `test` permission (required for `:beep`) only in the
+top-level execution context of a scheduler. Nested `do={}` blocks lose this
+permission regardless of `policy=test` or `dont-require-permissions=yes`.
+
+**Exceptions**: DHCP server scripts (`lease-script=`) have all permissions
+because the DHCP server is a kernel process. Scripts with `:beep` inside
+`do={}` work fine there.
+
+**The two-scheduler pattern** (used by the boot fanfare system):
+
+- Scheduler A: contains all logic in `do={}` blocks, zero `:beep` calls.
+  It enables Scheduler B at the end.
+- Scheduler B: disabled at rest, melody hardcoded at the top level (no
+  nesting), self-disables at the end.
+
+```
+# Scheduler A — logic only
+/system scheduler enable fanfare-sched-5
+
+# Scheduler B on-event (top level — :beep works here)
+:beep frequency=880 length=100ms
+:beep frequency=880 length=300ms
+/system scheduler disable [find name=fanfare-sched-5]
+```
+
+**Other RouterOS scripting gotchas**:
+
+| Problem | Correct approach |
+|---------|-----------------|
+| Global var nil check | Use `[:typeof $var] != "bool"` not `= "nil"` |
+| Find disk by partition | Use `/disk find slot=usb1-part1` not `name=usb1-part1` |
+| String concat with number | Use `("prefix-" . [:tostr $numVar])` — numbers need `[:tostr]` |
+| Vars between terminal lines | Wrap multi-line test in `{ :local x 1; command }` braces |
+| State between scheduled runs | Global vars reset each run — use script comment field instead |
+
+---
+
 ## Beeper-related Notes
 
-- `wifi-monitor` uses global `$wifiCount` — on first run it initialises and
-  does not beep. Beeps start from the second scheduler cycle.
-- `eth-monitor` uses global `$ethStates` — same behaviour on first run.
-- `attack-monitor` uses `$attackCount` — same. No false alarm on router boot.
+- `wifi-monitor`, `eth-monitor`, and `attack-monitor` store their previous
+  state in their own **script comment field** (not global variables). Global
+  variables do not persist between separate scheduled runs in RouterOS 7.22.
+- On the first run after install (comment = `"0"`), monitors initialise
+  without sounding an alarm. Beeps start from the second scheduler cycle.
+- The I-INVALID flag on monitor scripts is a static analyser false positive
+  caused by `/system script set` inside a scheduled script. Scripts execute
+  correctly — the flag is cosmetic only.
+
+---
+
+## Boot Fanfare Not Playing
+
+1. Check `startup-fanfare-sched` is enabled and not disabled:
+   ```
+   /system scheduler print where name=startup-fanfare-sched
+   ```
+   The `X` flag means disabled. Re-enable:
+   ```
+   /system scheduler enable startup-fanfare-sched
+   ```
+
+2. Check the current index stored in `startup-fanfare`:
+   ```
+   /system script print where name=startup-fanfare
+   # comment field should be 0-10
+   ```
+   If comment is blank or >10, reset it:
+   ```
+   /system script set [find name=startup-fanfare] comment=0
+   ```
+
+3. Check that all 11 `fanfare-sched-N` schedulers exist and are disabled:
+   ```
+   /system scheduler print where name~"fanfare-sched-"
+   ```
+   All should have the `X` (disabled) flag except any currently playing.
+
+4. Test the fanfare trigger manually (simulates what startup-fanfare-sched does):
+   ```
+   /system scheduler enable fanfare-sched-0
+   # Should play Tetris within 5 seconds, then self-disable
+   ```
+
+5. If a fanfare-sched-N got stuck enabled, disable it:
+   ```
+   /system scheduler disable [find name~"fanfare-sched-"]
+   ```
+
+6. Check WAN and USB are ready (startup-fanfare-sched waits for both):
+   ```
+   /ip route print where dst-address=0.0.0.0/0 active=yes
+   /disk print where slot=usb1-part1
+   ```
+   If either returns nothing, startup-fanfare-sched will keep waiting.
 
 ---
 
@@ -285,3 +380,8 @@ Differences from v6 discovered during this build:
 | Remove only static firewall rules | `/ip firewall filter remove [find dynamic=no]` |
 | DHCP network set by index | `/ip dhcp-server network set 2 ntp-server=X` (use index if `find` doesn't match) |
 | Print full detail | `print detail` — shows all fields including ones hidden in compact table view |
+| Find USB disk partition | `/disk find slot=usb1-part1` — `name=` is invalid and causes script abort |
+| Check nil global var | `[:typeof $var] != "bool"` — `= "nil"` comparison is unreliable in 7.22 |
+| :beep from scheduler | Top level only — silently fails inside any `do={}` block |
+| Concat string + number | `("prefix-" . [:tostr $numVar])` — numbers must be cast with `[:tostr]` |
+| Persist state across runs | Store in script comment field — global vars reset each scheduled run |
