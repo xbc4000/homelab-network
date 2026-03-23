@@ -716,147 +716,11 @@ add comment="Boot fanfare 10: Reveille bugle call" dont-require-permissions=yes 
     \n:beep frequency=523 length=150ms; :delay 25ms;\
     \n:beep frequency=392 length=150ms; :delay 25ms;\
     \n:beep frequency=523 length=600ms"
-# startup-fanfare: all 11 fanfare melodies inlined — no sub-script calls, so
-# beeper permission flows correctly from startup-fanfare-sched (policy includes
-# test). Index 0-10 in comment field cycles on each reboot. Global var prevents
-# re-play within same boot. Retries each minute until WAN and USB SSD ready.
+# startup-fanfare: comment field stores the next fanfare index (0-10).
+# Source is empty — startup-fanfare-sched handles all logic inline.
+# The 11 fanfare-sched-N schedulers each hold their melody at top level.
 add comment="0" dont-require-permissions=yes name=startup-fanfare \
-    owner=YOUR-ADMIN-USER policy=read,write,test source="\
-    \n:global startupFanfarePlayed;\
-    \n:if ([:typeof \$startupFanfarePlayed] = \"nil\") do={\
-    \n  :local idx [:tonum [/system script get [find name=startup-fanfare] comment]];\
-    \n  :if (\$idx > 10) do={ :set idx 0 };\
-    \n  :local ok true;\
-    \n  :if ([:len [/ip route find dst-address=0.0.0.0/0 active=yes]] = 0) do={ :set ok false };\
-    \n  :if ([:len [/disk find name=usb1-part1]] = 0) do={ :set ok false };\
-    \n  :if (\$ok) do={\
-    \n    :set startupFanfarePlayed true;\
-    \n    :if (\$idx = 0) do={\
-    \n      :beep frequency=659 length=200ms; :delay 50ms;\
-    \n      :beep frequency=494 length=100ms; :delay 25ms;\
-    \n      :beep frequency=523 length=100ms; :delay 25ms;\
-    \n      :beep frequency=587 length=200ms; :delay 50ms;\
-    \n      :beep frequency=523 length=100ms; :delay 25ms;\
-    \n      :beep frequency=494 length=100ms; :delay 25ms;\
-    \n      :beep frequency=440 length=200ms; :delay 50ms;\
-    \n      :beep frequency=440 length=100ms; :delay 25ms;\
-    \n      :beep frequency=523 length=100ms; :delay 25ms;\
-    \n      :beep frequency=659 length=200ms; :delay 50ms;\
-    \n      :beep frequency=587 length=100ms; :delay 25ms;\
-    \n      :beep frequency=523 length=100ms; :delay 25ms;\
-    \n      :beep frequency=494 length=400ms;\
-    \n    };\
-    \n    :if (\$idx = 1) do={\
-    \n      :beep frequency=466 length=300ms; :delay 100ms;\
-    \n      :beep frequency=466 length=150ms; :delay 50ms;\
-    \n      :beep frequency=466 length=150ms; :delay 50ms;\
-    \n      :beep frequency=698 length=200ms; :delay 50ms;\
-    \n      :beep frequency=466 length=300ms; :delay 100ms;\
-    \n      :beep frequency=698 length=600ms;\
-    \n    };\
-    \n    :if (\$idx = 2) do={\
-    \n      :beep frequency=587 length=500ms; :delay 100ms;\
-    \n      :beep frequency=659 length=500ms; :delay 100ms;\
-    \n      :beep frequency=523 length=500ms; :delay 100ms;\
-    \n      :beep frequency=262 length=500ms; :delay 100ms;\
-    \n      :beep frequency=392 length=800ms;\
-    \n    };\
-    \n    :if (\$idx = 3) do={\
-    \n      :beep frequency=392 length=250ms; :delay 50ms;\
-    \n      :beep frequency=392 length=250ms; :delay 50ms;\
-    \n      :beep frequency=392 length=250ms; :delay 50ms;\
-    \n      :beep frequency=311 length=175ms; :delay 25ms;\
-    \n      :beep frequency=466 length=75ms; :delay 25ms;\
-    \n      :beep frequency=392 length=250ms; :delay 50ms;\
-    \n      :beep frequency=311 length=175ms; :delay 25ms;\
-    \n      :beep frequency=466 length=75ms; :delay 25ms;\
-    \n      :beep frequency=392 length=600ms;\
-    \n    };\
-    \n    :if (\$idx = 4) do={\
-    \n      :beep frequency=440 length=200ms; :delay 50ms;\
-    \n      :beep frequency=415 length=200ms; :delay 50ms;\
-    \n      :beep frequency=440 length=200ms; :delay 50ms;\
-    \n      :beep frequency=415 length=200ms; :delay 50ms;\
-    \n      :beep frequency=440 length=200ms; :delay 50ms;\
-    \n      :beep frequency=659 length=400ms; :delay 50ms;\
-    \n      :beep frequency=587 length=600ms;\
-    \n    };\
-    \n    :if (\$idx = 5) do={\
-    \n      :beep frequency=880 length=100ms; :delay 50ms;\
-    \n      :beep frequency=880 length=100ms; :delay 50ms;\
-    \n      :beep frequency=880 length=100ms; :delay 150ms;\
-    \n      :beep frequency=880 length=300ms; :delay 50ms;\
-    \n      :beep frequency=880 length=300ms; :delay 50ms;\
-    \n      :beep frequency=880 length=300ms; :delay 150ms;\
-    \n      :beep frequency=880 length=100ms; :delay 50ms;\
-    \n      :beep frequency=880 length=100ms; :delay 50ms;\
-    \n      :beep frequency=880 length=100ms;\
-    \n    };\
-    \n    :if (\$idx = 6) do={\
-    \n      :beep frequency=659 length=300ms; :delay 100ms;\
-    \n      :beep frequency=523 length=300ms; :delay 100ms;\
-    \n      :beep frequency=587 length=300ms; :delay 100ms;\
-    \n      :beep frequency=392 length=600ms; :delay 200ms;\
-    \n      :beep frequency=392 length=300ms; :delay 100ms;\
-    \n      :beep frequency=587 length=300ms; :delay 100ms;\
-    \n      :beep frequency=659 length=300ms; :delay 100ms;\
-    \n      :beep frequency=523 length=600ms;\
-    \n    };\
-    \n    :if (\$idx = 7) do={\
-    \n      :beep frequency=659 length=150ms; :delay 25ms;\
-    \n      :beep frequency=587 length=150ms; :delay 25ms;\
-    \n      :beep frequency=370 length=250ms; :delay 50ms;\
-    \n      :beep frequency=415 length=300ms; :delay 75ms;\
-    \n      :beep frequency=554 length=150ms; :delay 25ms;\
-    \n      :beep frequency=494 length=150ms; :delay 25ms;\
-    \n      :beep frequency=294 length=250ms; :delay 50ms;\
-    \n      :beep frequency=330 length=300ms; :delay 75ms;\
-    \n      :beep frequency=494 length=150ms; :delay 25ms;\
-    \n      :beep frequency=440 length=150ms; :delay 25ms;\
-    \n      :beep frequency=277 length=250ms; :delay 50ms;\
-    \n      :beep frequency=330 length=300ms; :delay 75ms;\
-    \n      :beep frequency=440 length=600ms;\
-    \n    };\
-    \n    :if (\$idx = 8) do={\
-    \n      :beep frequency=392 length=200ms; :delay 50ms;\
-    \n      :beep frequency=523 length=400ms; :delay 50ms;\
-    \n      :beep frequency=392 length=200ms; :delay 50ms;\
-    \n      :beep frequency=262 length=200ms; :delay 50ms;\
-    \n      :beep frequency=392 length=200ms; :delay 50ms;\
-    \n      :beep frequency=523 length=200ms; :delay 50ms;\
-    \n      :beep frequency=440 length=200ms; :delay 50ms;\
-    \n      :beep frequency=392 length=600ms;\
-    \n    };\
-    \n    :if (\$idx = 9) do={\
-    \n      :beep frequency=330 length=150ms; :delay 25ms;\
-    \n      :beep frequency=330 length=75ms; :delay 25ms;\
-    \n      :beep frequency=349 length=150ms; :delay 25ms;\
-    \n      :beep frequency=370 length=75ms; :delay 25ms;\
-    \n      :beep frequency=392 length=150ms; :delay 25ms;\
-    \n      :beep frequency=415 length=75ms; :delay 25ms;\
-    \n      :beep frequency=440 length=150ms; :delay 25ms;\
-    \n      :beep frequency=466 length=75ms; :delay 25ms;\
-    \n      :beep frequency=494 length=150ms; :delay 25ms;\
-    \n      :beep frequency=494 length=75ms; :delay 25ms;\
-    \n      :beep frequency=523 length=500ms;\
-    \n    };\
-    \n    :if (\$idx = 10) do={\
-    \n      :beep frequency=392 length=150ms; :delay 25ms;\
-    \n      :beep frequency=523 length=150ms; :delay 25ms;\
-    \n      :beep frequency=659 length=150ms; :delay 25ms;\
-    \n      :beep frequency=784 length=150ms; :delay 25ms;\
-    \n      :beep frequency=659 length=75ms; :delay 25ms;\
-    \n      :beep frequency=784 length=300ms; :delay 50ms;\
-    \n      :beep frequency=659 length=150ms; :delay 25ms;\
-    \n      :beep frequency=523 length=150ms; :delay 25ms;\
-    \n      :beep frequency=392 length=150ms; :delay 25ms;\
-    \n      :beep frequency=523 length=600ms;\
-    \n    };\
-    \n    :local nxt (\$idx + 1);\
-    \n    :if (\$nxt > 10) do={ :set nxt 0 };\
-    \n    /system script set [find name=startup-fanfare] comment=\$nxt;\
-    \n  };\
-    \n}"
+    owner=YOUR-ADMIN-USER policy=read,write,test source=""
 /user group
 add name=mktxp_group policy=\
     "read,api,!local,!telnet,!ssh,!ftp,!reboot,!write,!policy,!test,!winbox,!password,!web,!sniff,!sensitive,!romon,!rest-api"
@@ -1340,13 +1204,13 @@ add comment="Weekly RouterOS update check and install" interval=1w \
 # permission is granted), increments index for next boot.
 add comment="Boot fanfare selector — enables fanfare-sched-N for this boot" \
     interval=1m name=startup-fanfare-sched on-event=":global \
-    startupFanfarePlayed; :if ([:typeof \$startupFanfarePlayed] = \"nil\") \
+    startupFanfarePlayed; :if ([:typeof \$startupFanfarePlayed] != \"bool\") \
     do={ :local ok true; :if ([:len [/ip route find dst-address=0.0.0.0/0 \
     active=yes]] = 0) do={ :set ok false }; :if ([:len [/disk find \
-    name=usb1-part1]] = 0) do={ :set ok false }; :if (\$ok) do={ :set \
+    slot=usb1-part1]] = 0) do={ :set ok false }; :if (\$ok) do={ :set \
     startupFanfarePlayed true; :local idx [:tonum [/system script get [find \
     name=startup-fanfare] comment]]; :if (\$idx > 10) do={ :set idx 0 }; \
-    /system scheduler enable (\"fanfare-sched-\" . \$idx); :local nxt \
+    /system scheduler enable (\"fanfare-sched-\" . [:tostr \$idx]); :local nxt \
     (\$idx + 1); :if (\$nxt > 10) do={ :set nxt 0 }; /system script set \
     [find name=startup-fanfare] comment=\$nxt; }; }" \
     policy=read,write,policy,test start-time=startup
