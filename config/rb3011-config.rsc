@@ -716,9 +716,10 @@ add comment="Boot fanfare 10: Reveille bugle call" dont-require-permissions=yes 
     \n:beep frequency=523 length=150ms; :delay 25ms;\
     \n:beep frequency=392 length=150ms; :delay 25ms;\
     \n:beep frequency=523 length=600ms"
-# startup-fanfare: cycles through 11 fanfares on each reboot. Index 0-10 stored
-# in comment field (persists across reboots). Global var prevents re-play within
-# same boot session. Retries each minute until WAN and USB SSD are ready.
+# startup-fanfare: all 11 fanfare melodies inlined — no sub-script calls, so
+# beeper permission flows correctly from startup-fanfare-sched (policy includes
+# test). Index 0-10 in comment field cycles on each reboot. Global var prevents
+# re-play within same boot. Retries each minute until WAN and USB SSD ready.
 add comment="0" dont-require-permissions=yes name=startup-fanfare \
     owner=YOUR-ADMIN-USER policy=read,write,test source="\
     \n:global startupFanfarePlayed;\
@@ -730,17 +731,127 @@ add comment="0" dont-require-permissions=yes name=startup-fanfare \
     \n  :if ([:len [/disk find name=usb1-part1]] = 0) do={ :set ok false };\
     \n  :if (\$ok) do={\
     \n    :set startupFanfarePlayed true;\
-    \n    :if (\$idx = 0) do={ /system script run fanfare-tetris };\
-    \n    :if (\$idx = 1) do={ /system script run fanfare-startrek };\
-    \n    :if (\$idx = 2) do={ /system script run fanfare-close-encounters };\
-    \n    :if (\$idx = 3) do={ /system script run fanfare-imperial-march };\
-    \n    :if (\$idx = 4) do={ /system script run fanfare-doctor-who };\
-    \n    :if (\$idx = 5) do={ /system script run fanfare-morse-sos };\
-    \n    :if (\$idx = 6) do={ /system script run fanfare-big-ben };\
-    \n    :if (\$idx = 7) do={ /system script run fanfare-nokia };\
-    \n    :if (\$idx = 8) do={ /system script run fanfare-jeopardy };\
-    \n    :if (\$idx = 9) do={ /system script run fanfare-mission-impossible };\
-    \n    :if (\$idx = 10) do={ /system script run fanfare-reveille };\
+    \n    :if (\$idx = 0) do={\
+    \n      :beep frequency=659 length=200ms; :delay 50ms;\
+    \n      :beep frequency=494 length=100ms; :delay 25ms;\
+    \n      :beep frequency=523 length=100ms; :delay 25ms;\
+    \n      :beep frequency=587 length=200ms; :delay 50ms;\
+    \n      :beep frequency=523 length=100ms; :delay 25ms;\
+    \n      :beep frequency=494 length=100ms; :delay 25ms;\
+    \n      :beep frequency=440 length=200ms; :delay 50ms;\
+    \n      :beep frequency=440 length=100ms; :delay 25ms;\
+    \n      :beep frequency=523 length=100ms; :delay 25ms;\
+    \n      :beep frequency=659 length=200ms; :delay 50ms;\
+    \n      :beep frequency=587 length=100ms; :delay 25ms;\
+    \n      :beep frequency=523 length=100ms; :delay 25ms;\
+    \n      :beep frequency=494 length=400ms;\
+    \n    };\
+    \n    :if (\$idx = 1) do={\
+    \n      :beep frequency=466 length=300ms; :delay 100ms;\
+    \n      :beep frequency=466 length=150ms; :delay 50ms;\
+    \n      :beep frequency=466 length=150ms; :delay 50ms;\
+    \n      :beep frequency=698 length=200ms; :delay 50ms;\
+    \n      :beep frequency=466 length=300ms; :delay 100ms;\
+    \n      :beep frequency=698 length=600ms;\
+    \n    };\
+    \n    :if (\$idx = 2) do={\
+    \n      :beep frequency=587 length=500ms; :delay 100ms;\
+    \n      :beep frequency=659 length=500ms; :delay 100ms;\
+    \n      :beep frequency=523 length=500ms; :delay 100ms;\
+    \n      :beep frequency=262 length=500ms; :delay 100ms;\
+    \n      :beep frequency=392 length=800ms;\
+    \n    };\
+    \n    :if (\$idx = 3) do={\
+    \n      :beep frequency=392 length=250ms; :delay 50ms;\
+    \n      :beep frequency=392 length=250ms; :delay 50ms;\
+    \n      :beep frequency=392 length=250ms; :delay 50ms;\
+    \n      :beep frequency=311 length=175ms; :delay 25ms;\
+    \n      :beep frequency=466 length=75ms; :delay 25ms;\
+    \n      :beep frequency=392 length=250ms; :delay 50ms;\
+    \n      :beep frequency=311 length=175ms; :delay 25ms;\
+    \n      :beep frequency=466 length=75ms; :delay 25ms;\
+    \n      :beep frequency=392 length=600ms;\
+    \n    };\
+    \n    :if (\$idx = 4) do={\
+    \n      :beep frequency=440 length=200ms; :delay 50ms;\
+    \n      :beep frequency=415 length=200ms; :delay 50ms;\
+    \n      :beep frequency=440 length=200ms; :delay 50ms;\
+    \n      :beep frequency=415 length=200ms; :delay 50ms;\
+    \n      :beep frequency=440 length=200ms; :delay 50ms;\
+    \n      :beep frequency=659 length=400ms; :delay 50ms;\
+    \n      :beep frequency=587 length=600ms;\
+    \n    };\
+    \n    :if (\$idx = 5) do={\
+    \n      :beep frequency=880 length=100ms; :delay 50ms;\
+    \n      :beep frequency=880 length=100ms; :delay 50ms;\
+    \n      :beep frequency=880 length=100ms; :delay 150ms;\
+    \n      :beep frequency=880 length=300ms; :delay 50ms;\
+    \n      :beep frequency=880 length=300ms; :delay 50ms;\
+    \n      :beep frequency=880 length=300ms; :delay 150ms;\
+    \n      :beep frequency=880 length=100ms; :delay 50ms;\
+    \n      :beep frequency=880 length=100ms; :delay 50ms;\
+    \n      :beep frequency=880 length=100ms;\
+    \n    };\
+    \n    :if (\$idx = 6) do={\
+    \n      :beep frequency=659 length=300ms; :delay 100ms;\
+    \n      :beep frequency=523 length=300ms; :delay 100ms;\
+    \n      :beep frequency=587 length=300ms; :delay 100ms;\
+    \n      :beep frequency=392 length=600ms; :delay 200ms;\
+    \n      :beep frequency=392 length=300ms; :delay 100ms;\
+    \n      :beep frequency=587 length=300ms; :delay 100ms;\
+    \n      :beep frequency=659 length=300ms; :delay 100ms;\
+    \n      :beep frequency=523 length=600ms;\
+    \n    };\
+    \n    :if (\$idx = 7) do={\
+    \n      :beep frequency=659 length=150ms; :delay 25ms;\
+    \n      :beep frequency=587 length=150ms; :delay 25ms;\
+    \n      :beep frequency=370 length=250ms; :delay 50ms;\
+    \n      :beep frequency=415 length=300ms; :delay 75ms;\
+    \n      :beep frequency=554 length=150ms; :delay 25ms;\
+    \n      :beep frequency=494 length=150ms; :delay 25ms;\
+    \n      :beep frequency=294 length=250ms; :delay 50ms;\
+    \n      :beep frequency=330 length=300ms; :delay 75ms;\
+    \n      :beep frequency=494 length=150ms; :delay 25ms;\
+    \n      :beep frequency=440 length=150ms; :delay 25ms;\
+    \n      :beep frequency=277 length=250ms; :delay 50ms;\
+    \n      :beep frequency=330 length=300ms; :delay 75ms;\
+    \n      :beep frequency=440 length=600ms;\
+    \n    };\
+    \n    :if (\$idx = 8) do={\
+    \n      :beep frequency=392 length=200ms; :delay 50ms;\
+    \n      :beep frequency=523 length=400ms; :delay 50ms;\
+    \n      :beep frequency=392 length=200ms; :delay 50ms;\
+    \n      :beep frequency=262 length=200ms; :delay 50ms;\
+    \n      :beep frequency=392 length=200ms; :delay 50ms;\
+    \n      :beep frequency=523 length=200ms; :delay 50ms;\
+    \n      :beep frequency=440 length=200ms; :delay 50ms;\
+    \n      :beep frequency=392 length=600ms;\
+    \n    };\
+    \n    :if (\$idx = 9) do={\
+    \n      :beep frequency=330 length=150ms; :delay 25ms;\
+    \n      :beep frequency=330 length=75ms; :delay 25ms;\
+    \n      :beep frequency=349 length=150ms; :delay 25ms;\
+    \n      :beep frequency=370 length=75ms; :delay 25ms;\
+    \n      :beep frequency=392 length=150ms; :delay 25ms;\
+    \n      :beep frequency=415 length=75ms; :delay 25ms;\
+    \n      :beep frequency=440 length=150ms; :delay 25ms;\
+    \n      :beep frequency=466 length=75ms; :delay 25ms;\
+    \n      :beep frequency=494 length=150ms; :delay 25ms;\
+    \n      :beep frequency=494 length=75ms; :delay 25ms;\
+    \n      :beep frequency=523 length=500ms;\
+    \n    };\
+    \n    :if (\$idx = 10) do={\
+    \n      :beep frequency=392 length=150ms; :delay 25ms;\
+    \n      :beep frequency=523 length=150ms; :delay 25ms;\
+    \n      :beep frequency=659 length=150ms; :delay 25ms;\
+    \n      :beep frequency=784 length=150ms; :delay 25ms;\
+    \n      :beep frequency=659 length=75ms; :delay 25ms;\
+    \n      :beep frequency=784 length=300ms; :delay 50ms;\
+    \n      :beep frequency=659 length=150ms; :delay 25ms;\
+    \n      :beep frequency=523 length=150ms; :delay 25ms;\
+    \n      :beep frequency=392 length=150ms; :delay 25ms;\
+    \n      :beep frequency=523 length=600ms;\
+    \n    };\
     \n    :local nxt (\$idx + 1);\
     \n    :if (\$nxt > 10) do={ :set nxt 0 };\
     \n    /system script set [find name=startup-fanfare] comment=\$nxt;\
