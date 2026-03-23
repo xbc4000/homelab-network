@@ -126,12 +126,12 @@ add name=pool-av ranges=10.50.50.10-10.50.50.20
 add name=pool-wifi ranges=10.60.60.10-10.60.60.199
 /ip dhcp-server
 add address-pool=pool-server1 interface=vlan10-server1 lease-script=\
-    dhcp-new-lease lease-time=12h name=dhcp-server1
+    dhcp-server1-lease lease-time=12h name=dhcp-server1
 add address-pool=pool-server2 interface=vlan20-server2 lease-script=\
-    dhcp-new-lease lease-time=12h name=dhcp-server2
+    dhcp-server2-lease lease-time=12h name=dhcp-server2
 add address-pool=pool-idrac interface=vlan30-idrac lease-script=dhcp-new-lease \
     lease-time=1d name=dhcp-idrac
-add address-pool=pool-pi interface=vlan40-pi lease-script=dhcp-new-lease \
+add address-pool=pool-pi interface=vlan40-pi lease-script=dhcp-pi-lease \
     lease-time=12h name=dhcp-pi
 add address-pool=pool-av interface=vlan50-av lease-script=dhcp-new-lease \
     lease-time=6h name=dhcp-av
@@ -305,17 +305,133 @@ add comment="New DHCP lease tone and log" dont-require-permissions=yes name=\
     frequency=1047 length=80ms; :delay 50ms; :beep frequency=1319 length=80ms;\
     \ :delay 50ms; :beep frequency=1568 length=150ms; :local msg (\"New lease: \
     \" . \$leaseActIP . \" MAC: \" . \$leaseActMAC); /log info \$msg"
-add comment="WiFi pihole-admin address-list management + beeper" \
+# dhcp-wifi-lease: pihole-admin-wifi address-list management for TXMGF6/TX1Y4.
+# Device-specific tones: TXMGF6=ascending C6-D6-E6-G6, TX1Y4=descending G6-E6-C6-G5.
+# Unknown device triggers rapid 880/440Hz alarm. All leases logged.
+add comment="WiFi lease handler — pihole-admin list + device-specific tones" \
     dont-require-permissions=yes name=dhcp-wifi-lease owner=YOUR-ADMIN-USER \
-    policy=read,write,test source=":local m1 \"62:B9:08:0B:44:C5\"; :local m2 \
-    \"34:7D:F6:68:AF:3D\"; :if (\$leaseActMAC = \$m1 or \$leaseActMAC = \$m2) \
-    do={ :if (\$leaseBound = 1) do={ :do { /ip firewall address-list add \
-    address=\$leaseActIP list=pihole-admin-wifi timeout=0 } on-error={} } \
-    else={ /ip firewall address-list remove [find list=pihole-admin-wifi \
-    address=\$leaseActIP] } }; :beep frequency=1047 length=80ms; :delay 50ms;\
-    \ :beep frequency=1319 length=80ms; :delay 50ms; :beep frequency=1568 \
-    length=150ms; :local msg (\"New lease: \" . \$leaseActIP . \" MAC: \" . \
-    \$leaseActMAC); /log info \$msg"
+    policy=read,write,test source="\
+    \n:local m1 \"62:B9:08:0B:44:C5\";\
+    \n:local m2 \"34:7D:F6:68:AF:3D\";\
+    \n:if (\$leaseActMAC = \$m1 or \$leaseActMAC = \$m2) do={\
+    \n  :if (\$leaseBound = 1) do={\
+    \n    :do { /ip firewall address-list add address=\$leaseActIP \
+    \n      list=pihole-admin-wifi timeout=0 } on-error={};\
+    \n  } else={\
+    \n    /ip firewall address-list remove [find list=pihole-admin-wifi \
+    \n      address=\$leaseActIP];\
+    \n  };\
+    \n  :if (\$leaseActMAC = \$m1) do={\
+    \n    :beep frequency=1047 length=80ms; :delay 30ms;\
+    \n    :beep frequency=1175 length=80ms; :delay 30ms;\
+    \n    :beep frequency=1319 length=80ms; :delay 30ms;\
+    \n    :beep frequency=1568 length=150ms;\
+    \n  } else={\
+    \n    :beep frequency=1568 length=80ms; :delay 30ms;\
+    \n    :beep frequency=1319 length=80ms; :delay 30ms;\
+    \n    :beep frequency=1047 length=80ms; :delay 30ms;\
+    \n    :beep frequency=784 length=150ms;\
+    \n  };\
+    \n} else={\
+    \n  :beep frequency=880 length=60ms; :delay 20ms;\
+    \n  :beep frequency=440 length=60ms; :delay 20ms;\
+    \n  :beep frequency=880 length=60ms; :delay 20ms;\
+    \n  :beep frequency=440 length=60ms; :delay 20ms;\
+    \n  :beep frequency=880 length=60ms; :delay 20ms;\
+    \n  :beep frequency=440 length=200ms;\
+    \n};\
+    \n:local msg (\"WiFi lease: \" . \$leaseActIP . \" MAC: \" . \$leaseActMAC);\
+    \n/log info \$msg"
+add comment="Server1 DHCP lease — deep G3-C4 tone" dont-require-permissions=yes \
+    name=dhcp-server1-lease owner=YOUR-ADMIN-USER policy=read,write,test source=\
+    ":beep frequency=196 length=300ms; :delay 50ms; :beep frequency=262 \
+    length=500ms; :local msg (\"Server1 lease: \" . \$leaseActIP . \" MAC: \" \
+    . \$leaseActMAC); /log info \$msg"
+add comment="Server2 DHCP lease — A3-D4-A4 tone" dont-require-permissions=yes \
+    name=dhcp-server2-lease owner=YOUR-ADMIN-USER policy=read,write,test source=\
+    ":beep frequency=220 length=200ms; :delay 50ms; :beep frequency=294 \
+    length=200ms; :delay 50ms; :beep frequency=440 length=400ms; :local msg \
+    (\"Server2 lease: \" . \$leaseActIP . \" MAC: \" . \$leaseActMAC); /log \
+    info \$msg"
+add comment="RPi DHCP lease — C5-E5-G5 ascending tone" dont-require-permissions=yes \
+    name=dhcp-pi-lease owner=YOUR-ADMIN-USER policy=read,write,test source=\
+    ":beep frequency=523 length=150ms; :delay 50ms; :beep frequency=659 \
+    length=150ms; :delay 50ms; :beep frequency=784 length=300ms; :local msg \
+    (\"RPi lease: \" . \$leaseActIP . \" MAC: \" . \$leaseActMAC); /log info \
+    \$msg"
+add comment="Pi-hole down — C5-G4-C4 descending tone" dont-require-permissions=yes \
+    name=pihole-down-alert owner=YOUR-ADMIN-USER policy=test source=":beep \
+    frequency=523 length=200ms; :delay 50ms; :beep frequency=392 length=200ms;\
+    \ :delay 50ms; :beep frequency=262 length=500ms"
+add comment="WAN down handler with PPPoE flap counter" dont-require-permissions=yes \
+    name=wan-down-handler owner=YOUR-ADMIN-USER policy=read,write,test source="\
+    \n:global wanDownCount;\
+    \n:if ([:typeof \$wanDownCount] = \"nil\") do={ :set wanDownCount 0 };\
+    \n:set wanDownCount (\$wanDownCount + 1);\
+    \n:if (\$wanDownCount >= 3) do={\
+    \n  :beep frequency=880 length=100ms; :delay 30ms;\
+    \n  :beep frequency=660 length=100ms; :delay 30ms;\
+    \n  :beep frequency=880 length=100ms; :delay 30ms;\
+    \n  :beep frequency=660 length=400ms;\
+    \n  /log error \"PPPOE FLAPPING DETECTED\";\
+    \n};\
+    \n/system script run alert-wan-down"
+add comment="Login alert — plays on new active session" dont-require-permissions=yes \
+    name=login-monitor owner=YOUR-ADMIN-USER policy=read,write,test source="\
+    \n:global loginMonCount;\
+    \n:if ([:typeof \$loginMonCount] = \"nil\") do={ :set loginMonCount 0 };\
+    \n:local cur [:len [/system user active find]];\
+    \n:if (\$cur > \$loginMonCount) do={\
+    \n  :beep frequency=784 length=150ms; :delay 50ms;\
+    \n  :beep frequency=1047 length=150ms; :delay 50ms;\
+    \n  :beep frequency=1319 length=300ms;\
+    \n  /log warning \"LOGIN ALERT: new active session\";\
+    \n};\
+    \n:set loginMonCount \$cur"
+add comment="SSH probe alert — plays when ssh-stage1 list grows" \
+    dont-require-permissions=yes name=ssh-probe-monitor owner=YOUR-ADMIN-USER \
+    policy=read,write,test source="\
+    \n:global sshProbeCount;\
+    \n:if ([:typeof \$sshProbeCount] = \"nil\") do={ :set sshProbeCount 0 };\
+    \n:local cur [:len [/ip firewall address-list find list=ssh-stage1]];\
+    \n:if (\$cur > \$sshProbeCount) do={\
+    \n  :beep frequency=659 length=100ms; :delay 30ms;\
+    \n  :beep frequency=523 length=100ms; :delay 30ms;\
+    \n  :beep frequency=392 length=200ms;\
+    \n  /log warning \"SSH PROBE DETECTED\";\
+    \n};\
+    \n:set sshProbeCount \$cur"
+add comment="Temperature alert — alarm at 60C" dont-require-permissions=yes \
+    name=temp-monitor owner=YOUR-ADMIN-USER policy=read,test source="\
+    \n:local temp [/system health get [find name=temperature] value];\
+    \n:if (\$temp >= 60) do={\
+    \n  :beep frequency=1000 length=200ms; :delay 50ms;\
+    \n  :beep frequency=1200 length=200ms; :delay 50ms;\
+    \n  :beep frequency=1000 length=200ms; :delay 50ms;\
+    \n  :beep frequency=1200 length=400ms;\
+    \n  /log error (\"TEMP ALERT: \" . \$temp . \"C\");\
+    \n}"
+add comment="DHCP pool low alert — warns when WiFi pool has fewer than 10 free" \
+    dont-require-permissions=yes name=dhcp-pool-monitor owner=YOUR-ADMIN-USER \
+    policy=read,test source="\
+    \n:local used [:len [/ip dhcp-server lease find server=dhcp-wifi status=bound]];\
+    \n:local free (190 - \$used);\
+    \n:if (\$free < 10) do={\
+    \n  :beep frequency=660 length=200ms; :delay 100ms;\
+    \n  :beep frequency=440 length=200ms; :delay 100ms;\
+    \n  :beep frequency=660 length=200ms; :delay 100ms;\
+    \n  :beep frequency=440 length=400ms;\
+    \n  /log warning (\"DHCP POOL LOW: \" . \$free . \" addresses free\");\
+    \n}"
+add comment="USB SSD periodic mount check — deep alarm if missing" \
+    dont-require-permissions=yes name=usb-periodic-check owner=YOUR-ADMIN-USER \
+    policy=read,test source="\
+    \n:if ([:len [/disk find name=usb1-part1]] = 0) do={\
+    \n  :beep frequency=300 length=400ms; :delay 100ms;\
+    \n  :beep frequency=300 length=400ms; :delay 100ms;\
+    \n  :beep frequency=300 length=800ms;\
+    \n  /log error \"USB SSD NOT MOUNTED\";\
+    \n}"
 add comment="WiFi client connected" dont-require-permissions=yes name=\
     wifi-connect owner=YOUR-ADMIN-USER policy=test source=":beep \
     frequency=1047 length=80ms; :delay 50ms; :beep frequency=1319 length=80ms;\
@@ -471,6 +587,159 @@ add comment="9" dont-require-permissions=yes name=eth-monitor \
     \n  :beep frequency=440 length=400ms;\
     \n};\
     \n/system script set [find name=eth-monitor] comment=\$current;"
+add comment="Boot fanfare 0: Tetris Theme A" dont-require-permissions=yes \
+    name=fanfare-tetris owner=YOUR-ADMIN-USER policy=test source="\
+    \n:beep frequency=659 length=200ms; :delay 50ms;\
+    \n:beep frequency=494 length=100ms; :delay 25ms;\
+    \n:beep frequency=523 length=100ms; :delay 25ms;\
+    \n:beep frequency=587 length=200ms; :delay 50ms;\
+    \n:beep frequency=523 length=100ms; :delay 25ms;\
+    \n:beep frequency=494 length=100ms; :delay 25ms;\
+    \n:beep frequency=440 length=200ms; :delay 50ms;\
+    \n:beep frequency=440 length=100ms; :delay 25ms;\
+    \n:beep frequency=523 length=100ms; :delay 25ms;\
+    \n:beep frequency=659 length=200ms; :delay 50ms;\
+    \n:beep frequency=587 length=100ms; :delay 25ms;\
+    \n:beep frequency=523 length=100ms; :delay 25ms;\
+    \n:beep frequency=494 length=400ms"
+add comment="Boot fanfare 1: Star Trek TOS fanfare" dont-require-permissions=yes \
+    name=fanfare-startrek owner=YOUR-ADMIN-USER policy=test source="\
+    \n:beep frequency=466 length=300ms; :delay 100ms;\
+    \n:beep frequency=466 length=150ms; :delay 50ms;\
+    \n:beep frequency=466 length=150ms; :delay 50ms;\
+    \n:beep frequency=698 length=200ms; :delay 50ms;\
+    \n:beep frequency=466 length=300ms; :delay 100ms;\
+    \n:beep frequency=698 length=600ms"
+add comment="Boot fanfare 2: Close Encounters 5-note motif" \
+    dont-require-permissions=yes name=fanfare-close-encounters \
+    owner=YOUR-ADMIN-USER policy=test source="\
+    \n:beep frequency=587 length=500ms; :delay 100ms;\
+    \n:beep frequency=659 length=500ms; :delay 100ms;\
+    \n:beep frequency=523 length=500ms; :delay 100ms;\
+    \n:beep frequency=262 length=500ms; :delay 100ms;\
+    \n:beep frequency=392 length=800ms"
+add comment="Boot fanfare 3: Imperial March opening" dont-require-permissions=yes \
+    name=fanfare-imperial-march owner=YOUR-ADMIN-USER policy=test source="\
+    \n:beep frequency=392 length=250ms; :delay 50ms;\
+    \n:beep frequency=392 length=250ms; :delay 50ms;\
+    \n:beep frequency=392 length=250ms; :delay 50ms;\
+    \n:beep frequency=311 length=175ms; :delay 25ms;\
+    \n:beep frequency=466 length=75ms; :delay 25ms;\
+    \n:beep frequency=392 length=250ms; :delay 50ms;\
+    \n:beep frequency=311 length=175ms; :delay 25ms;\
+    \n:beep frequency=466 length=75ms; :delay 25ms;\
+    \n:beep frequency=392 length=600ms"
+add comment="Boot fanfare 4: Doctor Who theme opening" dont-require-permissions=yes \
+    name=fanfare-doctor-who owner=YOUR-ADMIN-USER policy=test source="\
+    \n:beep frequency=440 length=200ms; :delay 50ms;\
+    \n:beep frequency=415 length=200ms; :delay 50ms;\
+    \n:beep frequency=440 length=200ms; :delay 50ms;\
+    \n:beep frequency=415 length=200ms; :delay 50ms;\
+    \n:beep frequency=440 length=200ms; :delay 50ms;\
+    \n:beep frequency=659 length=400ms; :delay 50ms;\
+    \n:beep frequency=587 length=600ms"
+add comment="Boot fanfare 5: Morse SOS (...---...)" dont-require-permissions=yes \
+    name=fanfare-morse-sos owner=YOUR-ADMIN-USER policy=test source="\
+    \n:beep frequency=880 length=100ms; :delay 50ms;\
+    \n:beep frequency=880 length=100ms; :delay 50ms;\
+    \n:beep frequency=880 length=100ms; :delay 150ms;\
+    \n:beep frequency=880 length=300ms; :delay 50ms;\
+    \n:beep frequency=880 length=300ms; :delay 50ms;\
+    \n:beep frequency=880 length=300ms; :delay 150ms;\
+    \n:beep frequency=880 length=100ms; :delay 50ms;\
+    \n:beep frequency=880 length=100ms; :delay 50ms;\
+    \n:beep frequency=880 length=100ms"
+add comment="Boot fanfare 6: Big Ben Westminster chime" dont-require-permissions=yes \
+    name=fanfare-big-ben owner=YOUR-ADMIN-USER policy=test source="\
+    \n:beep frequency=659 length=300ms; :delay 100ms;\
+    \n:beep frequency=523 length=300ms; :delay 100ms;\
+    \n:beep frequency=587 length=300ms; :delay 100ms;\
+    \n:beep frequency=392 length=600ms; :delay 200ms;\
+    \n:beep frequency=392 length=300ms; :delay 100ms;\
+    \n:beep frequency=587 length=300ms; :delay 100ms;\
+    \n:beep frequency=659 length=300ms; :delay 100ms;\
+    \n:beep frequency=523 length=600ms"
+add comment="Boot fanfare 7: Nokia ringtone" dont-require-permissions=yes \
+    name=fanfare-nokia owner=YOUR-ADMIN-USER policy=test source="\
+    \n:beep frequency=659 length=150ms; :delay 25ms;\
+    \n:beep frequency=587 length=150ms; :delay 25ms;\
+    \n:beep frequency=370 length=250ms; :delay 50ms;\
+    \n:beep frequency=415 length=300ms; :delay 75ms;\
+    \n:beep frequency=554 length=150ms; :delay 25ms;\
+    \n:beep frequency=494 length=150ms; :delay 25ms;\
+    \n:beep frequency=294 length=250ms; :delay 50ms;\
+    \n:beep frequency=330 length=300ms; :delay 75ms;\
+    \n:beep frequency=494 length=150ms; :delay 25ms;\
+    \n:beep frequency=440 length=150ms; :delay 25ms;\
+    \n:beep frequency=277 length=250ms; :delay 50ms;\
+    \n:beep frequency=330 length=300ms; :delay 75ms;\
+    \n:beep frequency=440 length=600ms"
+add comment="Boot fanfare 8: Jeopardy think music opening" \
+    dont-require-permissions=yes name=fanfare-jeopardy owner=YOUR-ADMIN-USER \
+    policy=test source="\
+    \n:beep frequency=392 length=200ms; :delay 50ms;\
+    \n:beep frequency=523 length=400ms; :delay 50ms;\
+    \n:beep frequency=392 length=200ms; :delay 50ms;\
+    \n:beep frequency=262 length=200ms; :delay 50ms;\
+    \n:beep frequency=392 length=200ms; :delay 50ms;\
+    \n:beep frequency=523 length=200ms; :delay 50ms;\
+    \n:beep frequency=440 length=200ms; :delay 50ms;\
+    \n:beep frequency=392 length=600ms"
+add comment="Boot fanfare 9: Mission Impossible theme" dont-require-permissions=yes \
+    name=fanfare-mission-impossible owner=YOUR-ADMIN-USER policy=test source="\
+    \n:beep frequency=330 length=150ms; :delay 25ms;\
+    \n:beep frequency=330 length=75ms; :delay 25ms;\
+    \n:beep frequency=349 length=150ms; :delay 25ms;\
+    \n:beep frequency=370 length=75ms; :delay 25ms;\
+    \n:beep frequency=392 length=150ms; :delay 25ms;\
+    \n:beep frequency=415 length=75ms; :delay 25ms;\
+    \n:beep frequency=440 length=150ms; :delay 25ms;\
+    \n:beep frequency=466 length=75ms; :delay 25ms;\
+    \n:beep frequency=494 length=150ms; :delay 25ms;\
+    \n:beep frequency=494 length=75ms; :delay 25ms;\
+    \n:beep frequency=523 length=500ms"
+add comment="Boot fanfare 10: Reveille bugle call" dont-require-permissions=yes \
+    name=fanfare-reveille owner=YOUR-ADMIN-USER policy=test source="\
+    \n:beep frequency=392 length=150ms; :delay 25ms;\
+    \n:beep frequency=523 length=150ms; :delay 25ms;\
+    \n:beep frequency=659 length=150ms; :delay 25ms;\
+    \n:beep frequency=784 length=150ms; :delay 25ms;\
+    \n:beep frequency=659 length=75ms; :delay 25ms;\
+    \n:beep frequency=784 length=300ms; :delay 50ms;\
+    \n:beep frequency=659 length=150ms; :delay 25ms;\
+    \n:beep frequency=523 length=150ms; :delay 25ms;\
+    \n:beep frequency=392 length=150ms; :delay 25ms;\
+    \n:beep frequency=523 length=600ms"
+# startup-fanfare: cycles through 11 fanfares on each reboot. Index 0-10 stored
+# in comment field (persists across reboots). Global var prevents re-play within
+# same boot session. Retries each minute until WAN and USB SSD are ready.
+add comment="0" dont-require-permissions=yes name=startup-fanfare \
+    owner=YOUR-ADMIN-USER policy=read,write,test source="\
+    \n:global startupFanfarePlayed;\
+    \n:if ([:typeof \$startupFanfarePlayed] = \"nil\") do={\
+    \n  :local idx [:tonum [/system script get [find name=startup-fanfare] comment]];\
+    \n  :if (\$idx > 10) do={ :set idx 0 };\
+    \n  :local ok true;\
+    \n  :if ([:len [/ip route find dst-address=0.0.0.0/0 active=yes]] = 0) do={ :set ok false };\
+    \n  :if ([:len [/disk find name=usb1-part1]] = 0) do={ :set ok false };\
+    \n  :if (\$ok) do={\
+    \n    :set startupFanfarePlayed true;\
+    \n    :if (\$idx = 0) do={ /system script run fanfare-tetris };\
+    \n    :if (\$idx = 1) do={ /system script run fanfare-startrek };\
+    \n    :if (\$idx = 2) do={ /system script run fanfare-close-encounters };\
+    \n    :if (\$idx = 3) do={ /system script run fanfare-imperial-march };\
+    \n    :if (\$idx = 4) do={ /system script run fanfare-doctor-who };\
+    \n    :if (\$idx = 5) do={ /system script run fanfare-morse-sos };\
+    \n    :if (\$idx = 6) do={ /system script run fanfare-big-ben };\
+    \n    :if (\$idx = 7) do={ /system script run fanfare-nokia };\
+    \n    :if (\$idx = 8) do={ /system script run fanfare-jeopardy };\
+    \n    :if (\$idx = 9) do={ /system script run fanfare-mission-impossible };\
+    \n    :if (\$idx = 10) do={ /system script run fanfare-reveille };\
+    \n    :local nxt (\$idx + 1);\
+    \n    :if (\$nxt > 10) do={ :set nxt 0 };\
+    \n    /system script set [find name=startup-fanfare] comment=\$nxt;\
+    \n  };\
+    \n}"
 /user group
 add name=mktxp_group policy=\
     "read,api,!local,!telnet,!ssh,!ftp,!reboot,!write,!policy,!test,!winbox,!password,!web,!sniff,!sensitive,!romon,!rest-api"
@@ -918,12 +1187,17 @@ add address=pool.ntp.org
 add address=time.cloudflare.com
 /system scheduler
 add comment="Daily RSC export" interval=1d name=daily-backup on-event=\
-    "/export file=usb1-part1/backups/daily/rb3011-config" policy=\
-    read,write,sensitive start-date=2026-03-20 start-time=03:00:00
+    "/export file=usb1-part1/backups/daily/rb3011-config; :beep frequency=523 \
+    length=100ms; :delay 50ms; :beep frequency=659 length=100ms; :delay 50ms; \
+    :beep frequency=784 length=100ms; :delay 50ms; :beep frequency=1047 \
+    length=300ms" policy=read,write,sensitive,test start-date=2026-03-20 \
+    start-time=03:00:00
 add comment="Weekly binary backup" interval=1w name=weekly-backup on-event=\
     "/system backup save name=usb1-part1/backups/weekly/rb3011-full \
-    encryption=aes-sha256" policy=read,write,sensitive start-date=2026-03-20 \
-    start-time=02:00:00
+    encryption=aes-sha256; :beep frequency=523 length=100ms; :delay 50ms; \
+    :beep frequency=659 length=100ms; :delay 50ms; :beep frequency=784 \
+    length=100ms; :delay 50ms; :beep frequency=1047 length=300ms" policy=\
+    read,write,sensitive,test start-date=2026-03-20 start-time=02:00:00
 add comment="Ethernet link up/down beeper" interval=3s name=eth-monitor \
     on-event="/system script run eth-monitor" policy=read,write,policy,test \
     start-date=2026-03-20 start-time=18:26:36
@@ -944,6 +1218,26 @@ add comment="Weekly RouterOS update check and install" interval=1w \
     name=auto-update on-event="/system script run auto-update" \
     policy=reboot,read,write,policy,sensitive start-date=2026-03-23 \
     start-time=03:00:00
+add comment="Boot fanfare cycling — plays once per boot when WAN+USB ready" \
+    interval=1m name=startup-fanfare-sched on-event=\
+    "/system script run startup-fanfare" policy=read,write,test \
+    start-time=startup
+add comment="Login/session alert monitor" interval=5s name=login-monitor-sched \
+    on-event="/system script run login-monitor" policy=read,write,test \
+    start-date=2026-03-23 start-time=00:00:00
+add comment="SSH brute-force probe alert monitor" interval=10s \
+    name=ssh-probe-monitor-sched on-event="/system script run ssh-probe-monitor" \
+    policy=read,write,test start-date=2026-03-23 start-time=00:00:00
+add comment="CPU temperature alert monitor" interval=1m name=temp-monitor-sched \
+    on-event="/system script run temp-monitor" policy=read,test \
+    start-date=2026-03-23 start-time=00:00:00
+add comment="WiFi DHCP pool low-address alert" interval=5m \
+    name=dhcp-pool-monitor-sched on-event="/system script run dhcp-pool-monitor" \
+    policy=read,test start-date=2026-03-23 start-time=00:00:00
+add comment="USB SSD periodic mount check every 5 minutes" interval=5m \
+    name=usb-periodic-check-sched on-event=\
+    "/system script run usb-periodic-check" policy=read,test \
+    start-date=2026-03-23 start-time=00:00:05
 /tool bandwidth-server
 set enabled=no
 /tool graphing interface
@@ -978,22 +1272,24 @@ add comment=iDRAC2 down-script=\
     host=10.30.30.11 interval=1m type=simple up-script=\
     "/log info \"iDRAC2 UP\"; /system script run alert-up"
 add comment=WAN down-script=\
-    "/log error \"WAN DOWN\"; /system script run alert-wan-down" \
+    "/log error \"WAN DOWN\"; /system script run wan-down-handler" \
     host=8.8.8.8 interval=30s type=simple up-script=\
     "/log info \"WAN UP\"; /system script run alert-up"
 add comment=Pi-hole down-script=\
     "/ip dns set servers=8.8.8.8,8.8.4.4; /log warning \"Pi-hole DOWN\"; \
-    /system script run alert-down" host=172.17.0.2 interval=15s type=simple \
-    up-script="/ip dns set servers=172.17.0.2,8.8.8.8,8.8.4.4; /log info \
-    \"Pi-hole UP\"; /system script run alert-up"
+    /system script run pihole-down-alert" host=172.17.0.2 interval=15s \
+    type=simple up-script="/ip dns set servers=172.17.0.2,8.8.8.8,8.8.4.4; \
+    /log info \"Pi-hole UP\"; /system script run alert-up"
 add comment=mAP2nD-1 down-script=\
     "/log warning \"mAP2nD-1 DOWN\"; /system script run alert-down" \
     host=10.60.60.200 interval=30s type=simple up-script=\
-    "/log info \"mAP2nD-1 UP\"; /system script run alert-up"
+    "/log info \"mAP2nD-1 UP\"; :beep frequency=659 length=200ms; :delay \
+    50ms; :beep frequency=880 length=400ms"
 add comment=wAP2nD-1 down-script=\
     "/log warning \"wAP2nD-1 DOWN\"; /system script run alert-down" \
     host=10.60.60.201 interval=30s type=simple up-script=\
-    "/log info \"wAP2nD-1 UP\"; /system script run alert-up"
+    "/log info \"wAP2nD-1 UP\"; :beep frequency=880 length=200ms; :delay \
+    50ms; :beep frequency=1319 length=400ms"
 add comment=RPi down-script=\
     "/log warning \"RPi DOWN\"; /system script run alert-down" \
     host=10.40.40.2 interval=1m type=simple up-script=\
