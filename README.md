@@ -2,8 +2,8 @@
 
 ```
 ╔══════════════════════════════════════════════════════════════════╗
-║  RB3011-GW  ·  RouterOS 7.22  ·  MikroTik RB3011UiAS            ║
-║  6 VLANs  ·  CAPsMAN  ·  Pi-hole v6  ·  WireGuard VPN           ║
+║  RB3011-GW  ·  RouterOS 7.22  ·  MikroTik RB3011UiAS             ║
+║  6 VLANs  ·  CAPsMAN  ·  Pi-hole v6  ·  WireGuard VPN            ║
 ╚══════════════════════════════════════════════════════════════════╝
 ```
 
