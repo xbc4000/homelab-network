@@ -52,7 +52,8 @@
 | Hostname | DNS Name | IP | MAC | VLAN |
 |----------|----------|-----|-----|------|
 | RB3011-GW | router.home | 10.10.10.1 | — | — |
-| PER730XD bond0 | server1.home | 10.10.10.2 | 24:6E:96:27:91:44 (primary) | 10 |
+| PER730XD bond0 NIC1 | server1.home | 10.10.10.2 | 24:6E:96:27:91:44 (primary) | 10 |
+| PER730XD bond0 NIC2 | server1-nic2.home | 10.10.10.3 | 24:6E:96:27:91:45 (slave) | 10 |
 | PER630 NIC1 | server2.home | 10.20.20.2 | 24:6E:96:AB:39:ED | 20 |
 | PER630 NIC2 (AMP) | amp.home | 10.20.20.3 | 24:6E:96:AB:39:EC | 20 |
 | iDRAC PER730XD | idrac1.home | 10.30.30.10 | 44:A8:42:4B:BF:95 | 30 |

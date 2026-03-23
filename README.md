@@ -60,6 +60,9 @@ homelab-network/
 │   ├── beeper-alerts.md        # All beeper scripts, schedulers, netwatch table
 │   └── troubleshooting.md      # Common issues and RouterOS v7.22 syntax notes
 ├── scripts/
+│   ├── auto-update.rsc         # Weekly RouterOS update — backup then install, triggers ap-upgrade
+│   ├── ap-upgrade.rsc          # Push firmware to CAPsMAN APs after router update
+│   ├── usb-check.rsc           # Startup USB SSD mount check — reboots up to 3x if not mounted
 │   ├── manual-backup.rsc       # Trigger an immediate backup
 │   ├── clear-blacklists.rsc    # Clear all DDoS/SSH/scanner blacklists + SSH stage lists
 │   ├── pihole-restart.rsc      # Restart Pi-hole container cleanly
@@ -80,6 +83,7 @@ homelab-network/
 | Back to Home VPN | Port 65504 UDP — see `/ip cloud print` on router |
 | router.home | 10.10.10.1 |
 | server1.home | 10.10.10.2 |
+| server1-nic2.home | 10.10.10.3 |
 | server2.home | 10.20.20.2 |
 | amp.home | 10.20.20.3 |
 | idrac1.home | 10.30.30.10 |

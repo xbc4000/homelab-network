@@ -1,7 +1,7 @@
 # RB3011UiAS — RouterOS 7.22 — Full Configuration Export
 # Exported: 2026-03-22
 # Software ID: WTM1-GYDD
-# Serial: E7EA0E43348D
+# Serial: REDACTED
 #
 # REDACTED FIELDS:
 #   - PPPoE username            → YOUR-PPPOE-USERNAME
@@ -336,7 +336,8 @@ add comment="0" dont-require-permissions=yes name=wifi-monitor \
     \n  :beep frequency=1047 length=150ms;\
     \n};\
     \n/system script set [find name=wifi-monitor] comment=\$current;"
-add dont-require-permissions=yes name=attack-alarm owner=YOUR-ADMIN-USER \
+add comment="DDoS/SSH/port scan blacklist increase alarm" \
+    dont-require-permissions=yes name=attack-alarm owner=YOUR-ADMIN-USER \
     policy=test source="\
     \n:beep frequency=440 length=50ms; :delay 30ms;\
     \n:beep frequency=550 length=50ms; :delay 30ms;\
@@ -497,20 +498,24 @@ add comment="Pi-hole logs" dst=/var/log/pihole list=pihole-log src=\
 /dude
 set data-directory=usb1-part1/dude enabled=yes
 /interface bridge port
-add bridge=bridge-main comment="Server1 NIC1 VLAN10" interface=\
-    ether2-SRV1-NIC1 pvid=10
-add bridge=bridge-main comment="Server1 NIC2 bond slave VLAN10" interface=\
-    ether3-SRV1-NIC2 pvid=10
-add bridge=bridge-main comment="Server2 NIC1 VLAN20" interface=\
-    ether4-SRV2-NIC1 pvid=20
-add bridge=bridge-main comment="Server2 NIC2 spare VLAN20" interface=\
-    ether5-SRV2-NIC2 pvid=20
-add bridge=bridge-main comment="iDRAC1 VLAN30" interface=ether6-iDRAC1 pvid=30
-add bridge=bridge-main comment="iDRAC2 VLAN30" interface=ether7-iDRAC2 pvid=30
-add bridge=bridge-main comment="RPi VLAN40" interface=ether8-RPi pvid=40
+add bridge=bridge-main comment="Server1 NIC1 VLAN10" frame-types=\
+    admit-only-untagged-and-priority-tagged interface=ether2-SRV1-NIC1 pvid=10
+add bridge=bridge-main comment="Server1 NIC2 bond slave VLAN10" frame-types=\
+    admit-only-untagged-and-priority-tagged interface=ether3-SRV1-NIC2 pvid=10
+add bridge=bridge-main comment="Server2 NIC1 VLAN20" frame-types=\
+    admit-only-untagged-and-priority-tagged interface=ether4-SRV2-NIC1 pvid=20
+add bridge=bridge-main comment="Server2 NIC2 spare VLAN20" frame-types=\
+    admit-only-untagged-and-priority-tagged interface=ether5-SRV2-NIC2 pvid=20
+add bridge=bridge-main comment="iDRAC1 VLAN30" frame-types=\
+    admit-only-untagged-and-priority-tagged interface=ether6-iDRAC1 pvid=30
+add bridge=bridge-main comment="iDRAC2 VLAN30" frame-types=\
+    admit-only-untagged-and-priority-tagged interface=ether7-iDRAC2 pvid=30
+add bridge=bridge-main comment="RPi VLAN40" frame-types=\
+    admit-only-untagged-and-priority-tagged interface=ether8-RPi pvid=40
 add bridge=bridge-main comment="WiFi AP uplink VLAN60 CAPsMAN local forwarding" \
-    interface=ether10-AP pvid=60
-add bridge=bridge-main comment="Blu-ray VLAN50" interface=ether9-BDR pvid=50
+    frame-types=admit-only-untagged-and-priority-tagged interface=ether10-AP pvid=60
+add bridge=bridge-main comment="Blu-ray VLAN50" frame-types=\
+    admit-only-untagged-and-priority-tagged interface=ether9-BDR pvid=50
 add bridge=bridge-main comment="Pi-hole container bridge port" interface=\
     veth-pihole
 /ip firewall connection tracking
@@ -569,6 +574,8 @@ add address=10.30.30.11 comment=iDRAC2-PER630 mac-address=\
     84:7B:EB:D6:0B:A2 server=dhcp-idrac
 add address=10.40.40.2 comment=RPi-TXMRPI mac-address=D8:3A:DD:3C:A2:CC \
     server=dhcp-pi
+add address=10.10.10.3 comment=Server1-PER730XD-NIC2 mac-address=\
+    24:6E:96:27:91:45 server=dhcp-server1
 /ip dhcp-server network
 add address=10.10.10.0/24 comment=Server1 dns-server=10.10.10.1 \
     gateway=10.10.10.1 ntp-server=10.10.10.1
@@ -579,7 +586,7 @@ add address=10.30.30.0/24 comment="iDRAC OOB" dns-server=10.30.30.1 \
 add address=10.40.40.0/24 comment=RPi dns-server=10.40.40.1 \
     gateway=10.40.40.1 ntp-server=10.40.40.1
 add address=10.50.50.0/24 comment=AV dns-server=10.50.50.1 \
-    gateway=10.50.50.1
+    gateway=10.50.50.1 ntp-server=10.50.50.1
 add address=10.60.60.0/24 comment=WiFi dns-server=10.60.60.1 \
     gateway=10.60.60.1 ntp-server=10.60.60.1
 /ip dns
@@ -596,6 +603,7 @@ add address=10.40.40.2 name=rpi.home type=A
 add address=172.17.0.2 name=pihole.home type=A
 add address=10.60.60.200 name=ap1.home type=A
 add address=10.60.60.201 name=ap2.home type=A
+add address=10.10.10.3 name=server1-nic2.home type=A
 /ip firewall address-list
 add address=0.0.0.0/8 comment="defconf: RFC6890" list=no_forward_ipv4
 add address=169.254.0.0/16 comment="defconf: RFC6890 link-local" list=\
@@ -907,6 +915,17 @@ add comment="WiFi connect/disconnect beeper" interval=5s name=wifi-monitor \
 add comment="Attack/DDoS detection beeper" interval=10s name=attack-monitor \
     on-event="/system script run attack-monitor" policy=read,write,policy,test \
     start-date=2026-03-20 start-time=19:09:03
+add comment="Check USB SSD mounted 90s after every boot" disabled=yes \
+    interval=1m30s name=usb-check on-event=\
+    "/system script run usb-check; /system scheduler disable usb-check" \
+    policy=reboot,read,write,policy start-time=startup
+add comment="Push AP firmware after router update (runs 20min after auto-update)" \
+    interval=1w name=ap-upgrade on-event="/system script run ap-upgrade" \
+    policy=reboot,read,write,policy start-date=2026-03-23 start-time=03:20:00
+add comment="Weekly RouterOS update check and install" interval=1w \
+    name=auto-update on-event="/system script run auto-update" \
+    policy=reboot,read,write,policy,sensitive start-date=2026-03-23 \
+    start-time=03:00:00
 /tool bandwidth-server
 set enabled=no
 /tool graphing interface
