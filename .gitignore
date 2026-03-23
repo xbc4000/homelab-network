@@ -1,4 +1,8 @@
 # Live router exports — contain real credentials, never commit
 *-export.rsc
 *-audit-export.rsc
-*-HANDOFF.md
+
+# Sensitive local files — never commit
+HANDOFF.md
+*.txt
+.claude/

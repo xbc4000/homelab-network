@@ -135,7 +135,7 @@ add address-pool=pool-pi interface=vlan40-pi lease-script=dhcp-new-lease \
     lease-time=12h name=dhcp-pi
 add address-pool=pool-av interface=vlan50-av lease-script=dhcp-new-lease \
     lease-time=6h name=dhcp-av
-add address-pool=pool-wifi interface=vlan60-wifi lease-script=dhcp-new-lease \
+add address-pool=pool-wifi interface=vlan60-wifi lease-script=dhcp-wifi-lease \
     lease-time=4h name=dhcp-wifi
 /snmp community
 set [ find default=yes ] addresses=10.10.10.0/24,10.20.20.0/24 name=\
@@ -305,6 +305,17 @@ add comment="New DHCP lease tone and log" dont-require-permissions=yes name=\
     frequency=1047 length=80ms; :delay 50ms; :beep frequency=1319 length=80ms;\
     \ :delay 50ms; :beep frequency=1568 length=150ms; :local msg (\"New lease: \
     \" . \$leaseActIP . \" MAC: \" . \$leaseActMAC); /log info \$msg"
+add comment="WiFi pihole-admin address-list management + beeper" \
+    dont-require-permissions=yes name=dhcp-wifi-lease owner=YOUR-ADMIN-USER \
+    policy=read,write,test source=":local m1 \"62:B9:08:0B:44:C5\"; :local m2 \
+    \"34:7D:F6:68:AF:3D\"; :if (\$leaseActMAC = \$m1 or \$leaseActMAC = \$m2) \
+    do={ :if (\$leaseBound = 1) do={ :do { /ip firewall address-list add \
+    address=\$leaseActIP list=pihole-admin-wifi timeout=0 } on-error={} } \
+    else={ /ip firewall address-list remove [find list=pihole-admin-wifi \
+    address=\$leaseActIP] } }; :beep frequency=1047 length=80ms; :delay 50ms;\
+    \ :beep frequency=1319 length=80ms; :delay 50ms; :beep frequency=1568 \
+    length=150ms; :local msg (\"New lease: \" . \$leaseActIP . \" MAC: \" . \
+    \$leaseActMAC); /log info \$msg"
 add comment="WiFi client connected" dont-require-permissions=yes name=\
     wifi-connect owner=YOUR-ADMIN-USER policy=test source=":beep \
     frequency=1047 length=80ms; :delay 50ms; :beep frequency=1319 length=80ms;\
@@ -542,6 +553,7 @@ add interface=vlan30-idrac list=LAN
 add interface=vlan40-pi list=LAN
 add interface=vlan50-av list=LAN
 add interface=vlan60-wifi list=LAN
+add interface=bridge-main list=LAN
 add interface=vlan10-server1 list=MGMT
 add interface=vlan30-idrac list=MGMT
 /ip address
@@ -719,6 +731,9 @@ add action=accept chain=forward comment="[FWD] WiFi DNS to Pi-hole UDP" \
 add action=accept chain=forward comment="[FWD] WiFi DNS to Pi-hole TCP" \
     dst-address=172.17.0.2 dst-port=53 protocol=tcp \
     src-address=10.60.60.0/24
+add action=accept chain=forward comment="[FWD] WiFi pihole-admin to Pi-hole admin" \
+    dst-address=172.17.0.2 dst-port=80,443 protocol=tcp \
+    src-address-list=pihole-admin-wifi
 add action=drop chain=forward comment="[FWD] WiFi no container net" \
     dst-address=172.17.0.0/24 src-address=10.60.60.0/24
 add action=drop chain=forward comment="[FWD] RPi no Server1" \
@@ -757,6 +772,9 @@ add action=drop chain=forward comment="[DDOS] Drop ICMP flood fwd" \
     in-interface-list=WAN protocol=icmp
 add action=accept chain=forward comment="[FWD] Allow to WAN" \
     out-interface=pppoe-wan
+add action=accept chain=forward comment="[FWD] Server1 to Pi-hole admin" \
+    dst-address=172.17.0.2 src-address=10.10.10.0/24
+add action=drop chain=forward comment="[FWD] Default drop all unmatched"
 add action=drop chain=input comment="[SEC] Drop TCP NULL scan input" \
     protocol=tcp tcp-flags=!fin,!syn,!rst,!ack
 add action=drop chain=input comment="[SEC] Drop TCP FIN no ACK input" \
