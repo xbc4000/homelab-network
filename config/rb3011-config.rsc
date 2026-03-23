@@ -363,6 +363,12 @@ add comment="Pi-hole down — C5-G4-C4 descending tone" dont-require-permissions
     name=pihole-down-alert owner=YOUR-ADMIN-USER policy=test source=":beep \
     frequency=523 length=200ms; :delay 50ms; :beep frequency=392 length=200ms;\
     \ :delay 50ms; :beep frequency=262 length=500ms"
+add comment="mAP up alert — E5-A5 tone" dont-require-permissions=yes \
+    name=map-up-alert owner=YOUR-ADMIN-USER policy=test source=":beep \
+    frequency=659 length=200ms; :delay 50ms; :beep frequency=880 length=400ms"
+add comment="wAP up alert — A5-E6 tone" dont-require-permissions=yes \
+    name=wap-up-alert owner=YOUR-ADMIN-USER policy=test source=":beep \
+    frequency=880 length=200ms; :delay 50ms; :beep frequency=1319 length=400ms"
 add comment="WAN down handler with PPPoE flap counter" dont-require-permissions=yes \
     name=wan-down-handler owner=YOUR-ADMIN-USER policy=read,write,test source="\
     \n:global wanDownCount;\
@@ -380,7 +386,7 @@ add comment="Login alert — plays on new active session" dont-require-permissio
     name=login-monitor owner=YOUR-ADMIN-USER policy=read,write,test source="\
     \n:global loginMonCount;\
     \n:if ([:typeof \$loginMonCount] = \"nil\") do={ :set loginMonCount 0 };\
-    \n:local cur [:len [/system user active find]];\
+    \n:local cur [:len [/user active find]];\
     \n:if (\$cur > \$loginMonCount) do={\
     \n  :beep frequency=784 length=150ms; :delay 50ms;\
     \n  :beep frequency=1047 length=150ms; :delay 50ms;\
@@ -1283,13 +1289,11 @@ add comment=Pi-hole down-script=\
 add comment=mAP2nD-1 down-script=\
     "/log warning \"mAP2nD-1 DOWN\"; /system script run alert-down" \
     host=10.60.60.200 interval=30s type=simple up-script=\
-    "/log info \"mAP2nD-1 UP\"; :beep frequency=659 length=200ms; :delay \
-    50ms; :beep frequency=880 length=400ms"
+    "/log info \"mAP2nD-1 UP\"; /system script run map-up-alert"
 add comment=wAP2nD-1 down-script=\
     "/log warning \"wAP2nD-1 DOWN\"; /system script run alert-down" \
     host=10.60.60.201 interval=30s type=simple up-script=\
-    "/log info \"wAP2nD-1 UP\"; :beep frequency=880 length=200ms; :delay \
-    50ms; :beep frequency=1319 length=400ms"
+    "/log info \"wAP2nD-1 UP\"; /system script run wap-up-alert"
 add comment=RPi down-script=\
     "/log warning \"RPi DOWN\"; /system script run alert-down" \
     host=10.40.40.2 interval=1m type=simple up-script=\
