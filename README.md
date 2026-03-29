@@ -135,7 +135,11 @@ homelab-network-1/
 │   ├── services.md              # Pi-hole, VPN, AMP, Dude, backups, SNMP
 │   ├── security.md              # Firewall chains, DDoS, SSH ladder, hardening
 │   ├── beeper-alerts.md         # All alert scripts, schedulers, boot fanfare system
+│   ├── servers.md               # Server NIC bonding and network config (PER730XD, PER630)
 │   └── troubleshooting.md       # Common issues, RouterOS 7.22 syntax notes
+├── servers/
+│   ├── server1-network.sh       # NetworkManager bond setup for Server1 (PER730XD)
+│   └── server2-network.sh       # Template bond setup for Server2 (PER630, pending)
 ├── scripts/
 │   ├── auto-update.rsc          # Weekly RouterOS update — backup then install
 │   ├── ap-upgrade.rsc           # Push firmware to CAPsMAN APs after router update
@@ -251,4 +255,5 @@ DNS allow-remote-requests disabled, MAC server lockdown, CAP mode.
 | [services.md](docs/services.md) | Pi-hole, Back to Home VPN, AMP, The Dude, USB structure, backups, SNMP |
 | [security.md](docs/security.md) | Firewall chains, DDoS, SSH brute-force ladder, port scan detection, hardening |
 | [beeper-alerts.md](docs/beeper-alerts.md) | All alert scripts, schedulers, netwatch table, boot fanfare system |
+| [servers.md](docs/servers.md) | Server NIC bonding, NetworkManager setup, iDRAC config, failover testing |
 | [troubleshooting.md](docs/troubleshooting.md) | Common issues, CAPsMAN tips, RouterOS 7.22 syntax notes, beeper gotchas |
