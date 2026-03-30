@@ -1,57 +1,44 @@
 # usb-check.rsc
-# Runs 90 seconds after every boot via startup scheduler.
+# Runs 90 seconds after every boot via startup scheduler (enabled by auto-update
+# before the post-update reboot, disabled again after running).
 # Checks if the USB SSD is mounted and accessible.
-# If not mounted, increments a reboot counter stored on internal flash
+# If not mounted, increments a reboot counter stored in the script's comment field
 # and reboots to try again.
-# After 3 consecutive failed attempts, stops rebooting and alarms loudly
-# so you know the drive needs physical attention.
+# After 3 consecutive failed attempts, stops rebooting and alarms loudly.
 #
-# Counter file: usb-reboot-count (on internal flash, NOT on the USB)
-# Counter is cleared automatically when USB mounts successfully.
+# Counter storage: script comment field (persistent across reboots, no file I/O needed).
+# Counter is cleared to "0" automatically when USB mounts successfully.
+# Detection: /disk find slot=usb1-part1 (consistent with usb-periodic-check).
 #
-# Scheduler: startup + 90 second delay
-# Policy: read,write,policy,reboot
+# Scheduler: startup + 90 second delay (disabled=yes at rest, enabled by auto-update
+#            before update reboot, self-disables after running)
+# Policy: reboot,read,write,policy,test
 # =============================================================================
 
 :local maxAttempts 3
-:local countFile "usb-reboot-count"
-:local usbPath "usb1-part1"
-:local mounted false
+:local usbMounted false
 
-# Check if USB SSD is accessible by looking for the partition in file list
-:foreach f in=[/file find] do={
-    :if ([/file get $f name] = $usbPath) do={
-        :set mounted true
-    }
-}
+# Check USB SSD by looking for the partition in the disk list
+:if ([:len [/disk find slot=usb1-part1]] > 0) do={ :set usbMounted true }
 
-:if ($mounted = true) do={
+:if ($usbMounted = true) do={
     /log info "USB-CHECK: USB SSD mounted and accessible"
 
     # Clear the reboot counter on successful mount
-    :if ([:len [/file find name=$countFile]] > 0) do={
-        /file remove [find name=$countFile]
-        /log info "USB-CHECK: Reboot counter cleared"
-    }
+    /system script set [find name=usb-check] comment="0"
+    /log info "USB-CHECK: Reboot counter cleared"
 
 } else={
-    # USB not mounted — check reboot counter
-    :local count 0
-
-    :if ([:len [/file find name=$countFile]] > 0) do={
-        :set count [:tonum [/file get [find name=$countFile] contents]]
-    }
+    # USB not mounted — read reboot counter from script comment field
+    :local count [:tonum [/system script get [find name=usb-check] comment]]
+    :if ([:typeof $count] = "nil") do={ :set count 0 }
 
     /log warning ("USB-CHECK: USB SSD NOT mounted — attempt " . ($count + 1) . " of " . $maxAttempts)
 
     :if ($count < $maxAttempts) do={
-        # Increment counter and write to internal flash
+        # Increment counter and store in comment field
         :local newCount ($count + 1)
-        :if ([:len [/file find name=$countFile]] > 0) do={
-            /file set [find name=$countFile] contents=$newCount
-        } else={
-            /file add name=$countFile contents=$newCount
-        }
+        /system script set [find name=usb-check] comment=$newCount
 
         /log warning ("USB-CHECK: Rebooting to retry USB mount (attempt " . $newCount . " of " . $maxAttempts . ")")
 
@@ -68,9 +55,9 @@
         /log error "USB-CHECK: USB SSD failed to mount after 3 reboots — REQUIRES PHYSICAL ATTENTION"
 
         # Clear counter so next manual reboot gets 3 more attempts
-        /file remove [find name=$countFile]
+        /system script set [find name=usb-check] comment="0"
 
-        # Attack alarm pattern repeated 3 times — unmistakable
+        # Ascending alarm pattern repeated 3 times — unmistakable
         :for i from=1 to=3 do={
             :beep frequency=440 length=50ms; :delay 30ms
             :beep frequency=550 length=50ms; :delay 30ms

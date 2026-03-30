@@ -46,6 +46,24 @@
 #       analyser false positive on /system script set inside a scheduled
 #       script. Scripts execute correctly — flag is cosmetic only.
 #
+#   2026-03-30 — Bug fixes: monitors, auto-update, usb-check
+#     - login-monitor and ssh-probe-monitor rewritten to use comment field for
+#       state (same pattern as eth/wifi/attack-monitor). Global vars were causing
+#       them to fire on every run rather than only on new events.
+#     - wan-down-handler rewritten to use comment field for PPPoE flap counter.
+#       Global var was resetting to 0 on every netwatch DOWN event — flap
+#       detection (>= 3) never triggered.
+#     - Added wan-up-handler script: resets flap counter and plays alert-up.
+#     - WAN netwatch up-script updated to call wan-up-handler instead of alert-up
+#       directly so the flap counter resets on recovery.
+#     - Added auto-update, ap-upgrade, usb-check to /system script (were missing —
+#       schedulers referenced scripts that did not exist, all three features were
+#       silently failing).
+#     - Scheduler policies updated: usb-check, ap-upgrade, auto-update now include
+#       test permission so :beep calls work.
+#     - usb-check updated to use /disk find slot=usb1-part1 (consistent with
+#       usb-periodic-check) and comment field for reboot counter instead of file.
+#
 #   2026-03-22 — CAPsMAN fix
 #     - Added [IN] CAPsMAN control from APs (UDP 5246/5247 from vlan60-wifi)
 #     - Was missing after VLAN60 input was tightened to DNS+NTP only
@@ -369,12 +387,13 @@ add comment="mAP up alert — E5-A5 tone" dont-require-permissions=yes \
 add comment="wAP up alert — A5-E6 tone" dont-require-permissions=yes \
     name=wap-up-alert owner=YOUR-ADMIN-USER policy=test source=":beep \
     frequency=880 length=200ms; :delay 50ms; :beep frequency=1319 length=400ms"
-add comment="WAN down handler with PPPoE flap counter" dont-require-permissions=yes \
+add comment="0" dont-require-permissions=yes \
     name=wan-down-handler owner=YOUR-ADMIN-USER policy=read,write,test source="\
-    \n:global wanDownCount;\
-    \n:if ([:typeof \$wanDownCount] = \"nil\") do={ :set wanDownCount 0 };\
-    \n:set wanDownCount (\$wanDownCount + 1);\
-    \n:if (\$wanDownCount >= 3) do={\
+    \n:local prev [:tonum [/system script get [find name=wan-down-handler] comment]];\
+    \n:if ([:typeof \$prev] = \"nil\") do={ :set prev 0 };\
+    \n:local newCount (\$prev + 1);\
+    \n/system script set [find name=wan-down-handler] comment=\$newCount;\
+    \n:if (\$newCount >= 3) do={\
     \n  :beep frequency=880 length=100ms; :delay 30ms;\
     \n  :beep frequency=660 length=100ms; :delay 30ms;\
     \n  :beep frequency=880 length=100ms; :delay 30ms;\
@@ -382,31 +401,35 @@ add comment="WAN down handler with PPPoE flap counter" dont-require-permissions=
     \n  /log error \"PPPOE FLAPPING DETECTED\";\
     \n};\
     \n/system script run alert-wan-down"
-add comment="Login alert — plays on new active session" dont-require-permissions=yes \
+add comment="WAN up handler — resets PPPoE flap counter" dont-require-permissions=yes \
+    name=wan-up-handler owner=YOUR-ADMIN-USER policy=read,write,test source="\
+    \n/system script set [find name=wan-down-handler] comment=\"0\";\
+    \n/system script run alert-up"
+add comment="0" dont-require-permissions=yes \
     name=login-monitor owner=YOUR-ADMIN-USER policy=read,write,test source="\
-    \n:global loginMonCount;\
-    \n:if ([:typeof \$loginMonCount] = \"nil\") do={ :set loginMonCount 0 };\
+    \n:local prev [:tonum [/system script get [find name=login-monitor] comment]];\
     \n:local cur [:len [/user active find]];\
-    \n:if (\$cur > \$loginMonCount) do={\
+    \n:if ([:typeof \$prev] = \"nil\") do={:set prev \$cur};\
+    \n:if (\$cur > \$prev) do={\
     \n  :beep frequency=784 length=150ms; :delay 50ms;\
     \n  :beep frequency=1047 length=150ms; :delay 50ms;\
     \n  :beep frequency=1319 length=300ms;\
     \n  /log warning \"LOGIN ALERT: new active session\";\
     \n};\
-    \n:set loginMonCount \$cur"
-add comment="SSH probe alert — plays when ssh-stage1 list grows" \
-    dont-require-permissions=yes name=ssh-probe-monitor owner=YOUR-ADMIN-USER \
+    \n/system script set [find name=login-monitor] comment=\$cur;"
+add comment="0" dont-require-permissions=yes \
+    name=ssh-probe-monitor owner=YOUR-ADMIN-USER \
     policy=read,write,test source="\
-    \n:global sshProbeCount;\
-    \n:if ([:typeof \$sshProbeCount] = \"nil\") do={ :set sshProbeCount 0 };\
+    \n:local prev [:tonum [/system script get [find name=ssh-probe-monitor] comment]];\
     \n:local cur [:len [/ip firewall address-list find list=ssh-stage1]];\
-    \n:if (\$cur > \$sshProbeCount) do={\
+    \n:if ([:typeof \$prev] = \"nil\") do={:set prev \$cur};\
+    \n:if (\$cur > \$prev) do={\
     \n  :beep frequency=659 length=100ms; :delay 30ms;\
     \n  :beep frequency=523 length=100ms; :delay 30ms;\
     \n  :beep frequency=392 length=200ms;\
     \n  /log warning \"SSH PROBE DETECTED\";\
     \n};\
-    \n:set sshProbeCount \$cur"
+    \n/system script set [find name=ssh-probe-monitor] comment=\$cur;"
 add comment="Temperature alert — alarm at 60C" dont-require-permissions=yes \
     name=temp-monitor owner=YOUR-ADMIN-USER policy=read,test source="\
     \n:local temp [/system health get [find name=temperature] value];\
@@ -721,6 +744,94 @@ add comment="Boot fanfare 10: Reveille bugle call" dont-require-permissions=yes 
 # The 11 fanfare-sched-N schedulers each hold their melody at top level.
 add comment="0" dont-require-permissions=yes name=startup-fanfare \
     owner=YOUR-ADMIN-USER policy=read,write,test source=""
+# auto-update: check for RouterOS updates on stable channel, take encrypted backup, install.
+# Scheduler: Sunday 03:00:00 weekly. Policy includes test for :beep alerts.
+add comment="Check RouterOS updates and install with pre-update backup" \
+    dont-require-permissions=yes name=auto-update owner=YOUR-ADMIN-USER \
+    policy=reboot,read,write,policy,sensitive,test source="\
+    \n/system package update set channel=stable\
+    \n/system package update check-for-updates\
+    \n:delay 15s\
+    \n:local status [/system package update get status]\
+    \n:local latest [/system package update get latest-version]\
+    \n:local current [/system resource get version]\
+    \n:if (\$status = \"New version is available\") do={\
+    \n  /log warning (\"AUTO-UPDATE: New RouterOS available: \" . \$latest . \" (current: \" . \$current . \") — taking backup and installing\")\
+    \n  /system backup save name=usb1-part1/backups/pre-update/rb3011-pre-update encryption=aes-sha256\
+    \n  :delay 10s\
+    \n  :beep frequency=880 length=100ms; :delay 50ms\
+    \n  :beep frequency=880 length=100ms; :delay 50ms\
+    \n  :beep frequency=1320 length=300ms\
+    \n  /system scheduler enable usb-check\
+    \n  /log info \"AUTO-UPDATE: usb-check scheduler re-enabled for post-update reboot\"\
+    \n  :delay 5s\
+    \n  /system package update install\
+    \n} else={\
+    \n  /log info (\"AUTO-UPDATE: RouterOS is up to date (\" . \$current . \")\")\
+    \n}"
+# ap-upgrade: push firmware to all connected CAPsMAN APs.
+# Runs 20 min after auto-update to allow time for router reboot and CAPsMAN reconnection.
+add comment="Push firmware upgrades to all connected CAPsMAN APs" \
+    dont-require-permissions=yes name=ap-upgrade owner=YOUR-ADMIN-USER \
+    policy=reboot,read,write,policy,test source="\
+    \n:local capCount [:len [/caps-man remote-cap find]]\
+    \n:if (\$capCount = 0) do={\
+    \n  /log warning \"AP-UPGRADE: No APs connected to CAPsMAN — skipping AP upgrade\"\
+    \n  /log warning \"AP-UPGRADE: Check /caps-man remote-cap print and retry manually\"\
+    \n} else={\
+    \n  /log info (\"AP-UPGRADE: \" . \$capCount . \" AP(s) connected — checking firmware\")\
+    \n  :foreach cap in=[/caps-man remote-cap find] do={\
+    \n    :local name [/caps-man remote-cap get \$cap name]\
+    \n    :local ver  [/caps-man remote-cap get \$cap version]\
+    \n    /log info (\"AP-UPGRADE: \" . \$name . \" running \" . \$ver)\
+    \n  }\
+    \n  /caps-man remote-cap upgrade [find]\
+    \n  :beep frequency=523 length=100ms; :delay 50ms\
+    \n  :beep frequency=784 length=100ms; :delay 50ms\
+    \n  :beep frequency=1047 length=300ms\
+    \n  /log info \"AP-UPGRADE: Upgrade command sent to all APs — APs will reboot individually\"\
+    \n}"
+# usb-check: runs 90s after boot (enabled by auto-update before update reboot).
+# Uses comment field for reboot counter — persistent across reboots, no file I/O needed.
+# After 3 failed attempts, alarms and stops rebooting. Counter clears on successful mount.
+add comment="0" dont-require-permissions=yes name=usb-check \
+    owner=YOUR-ADMIN-USER policy=reboot,read,write,policy,test source="\
+    \n:local maxAttempts 3\
+    \n:local usbMounted false\
+    \n:if ([:len [/disk find slot=usb1-part1]] > 0) do={ :set usbMounted true }\
+    \n:if (\$usbMounted = true) do={\
+    \n  /log info \"USB-CHECK: USB SSD mounted and accessible\"\
+    \n  /system script set [find name=usb-check] comment=\"0\"\
+    \n} else={\
+    \n  :local count [:tonum [/system script get [find name=usb-check] comment]]\
+    \n  :if ([:typeof \$count] = \"nil\") do={ :set count 0 }\
+    \n  /log warning (\"USB-CHECK: USB SSD NOT mounted — attempt \" . (\$count + 1) . \" of \" . \$maxAttempts)\
+    \n  :if (\$count < \$maxAttempts) do={\
+    \n    :local newCount (\$count + 1)\
+    \n    /system script set [find name=usb-check] comment=\$newCount\
+    \n    /log warning (\"USB-CHECK: Rebooting to retry (attempt \" . \$newCount . \" of \" . \$maxAttempts . \")\")\
+    \n    :beep frequency=880 length=150ms; :delay 100ms\
+    \n    :beep frequency=660 length=150ms; :delay 100ms\
+    \n    :beep frequency=440 length=300ms\
+    \n    :delay 3s\
+    \n    /system reboot\
+    \n  } else={\
+    \n    /log error \"USB-CHECK: USB SSD failed to mount after 3 reboots — REQUIRES PHYSICAL ATTENTION\"\
+    \n    /system script set [find name=usb-check] comment=\"0\"\
+    \n    :for i from=1 to=3 do={\
+    \n      :beep frequency=440 length=50ms; :delay 30ms\
+    \n      :beep frequency=550 length=50ms; :delay 30ms\
+    \n      :beep frequency=660 length=50ms; :delay 30ms\
+    \n      :beep frequency=880 length=50ms; :delay 30ms\
+    \n      :beep frequency=1100 length=50ms; :delay 30ms\
+    \n      :beep frequency=880 length=50ms; :delay 30ms\
+    \n      :beep frequency=660 length=50ms; :delay 30ms\
+    \n      :beep frequency=550 length=50ms; :delay 30ms\
+    \n      :beep frequency=440 length=300ms\
+    \n      :delay 500ms\
+    \n    }\
+    \n  }\
+    \n}"
 /user group
 add name=mktxp_group policy=\
     "read,api,!local,!telnet,!ssh,!ftp,!reboot,!write,!policy,!test,!winbox,!password,!web,!sniff,!sensitive,!romon,!rest-api"
@@ -1190,13 +1301,13 @@ add comment="Attack/DDoS detection beeper" interval=10s name=attack-monitor \
 add comment="Check USB SSD mounted 90s after every boot" disabled=yes \
     interval=1m30s name=usb-check on-event=\
     "/system script run usb-check; /system scheduler disable usb-check" \
-    policy=reboot,read,write,policy start-time=startup
+    policy=reboot,read,write,policy,test start-time=startup
 add comment="Push AP firmware after router update (runs 20min after auto-update)" \
     interval=1w name=ap-upgrade on-event="/system script run ap-upgrade" \
-    policy=reboot,read,write,policy start-date=2026-03-23 start-time=03:20:00
+    policy=reboot,read,write,policy,test start-date=2026-03-23 start-time=03:20:00
 add comment="Weekly RouterOS update check and install" interval=1w \
     name=auto-update on-event="/system script run auto-update" \
-    policy=reboot,read,write,policy,sensitive start-date=2026-03-23 \
+    policy=reboot,read,write,policy,sensitive,test start-date=2026-03-23 \
     start-time=03:00:00
 # startup-fanfare-sched: logic only — no :beep. Reads idx from startup-fanfare
 # comment, enables fanfare-sched-N (which plays melody at top level where :beep
@@ -1371,7 +1482,7 @@ add comment=iDRAC2 down-script=\
 add comment=WAN down-script=\
     "/log error \"WAN DOWN\"; /system script run wan-down-handler" \
     host=8.8.8.8 interval=30s type=simple up-script=\
-    "/log info \"WAN UP\"; /system script run alert-up"
+    "/log info \"WAN UP\"; /system script run wan-up-handler"
 add comment=Pi-hole down-script=\
     "/ip dns set servers=8.8.8.8,8.8.4.4; /log warning \"Pi-hole DOWN\"; \
     /system script run pihole-down-alert" host=172.17.0.2 interval=15s \
