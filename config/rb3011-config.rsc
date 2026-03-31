@@ -64,6 +64,14 @@
 #     - usb-check updated to use /disk find slot=usb1-part1 (consistent with
 #       usb-periodic-check) and comment field for reboot counter instead of file.
 #
+#   2026-03-31 — Monitor scripts: eliminate log noise
+#     - All 5 monitor scripts (eth, wifi, attack, login, ssh-probe) now only
+#       write the comment field when the value actually changes, not every poll.
+#     - Previously every scheduler run triggered a RouterOS config-change log
+#       entry even when nothing changed, flooding the log window.
+#     - login-monitor and ssh-probe-monitor also update comment on count decrease
+#       so the next increase is correctly detected.
+#
 #   2026-03-31 — RPi firewall: open for metrics and management
 #     - RPi can now reach all internal VLANs (Server1, Server2, iDRAC, AV, WiFi)
 #       for Grafana/Prometheus metrics scraping
@@ -444,8 +452,11 @@ add comment="0" dont-require-permissions=yes \
     \n  :beep frequency=1047 length=150ms; :delay 50ms;\
     \n  :beep frequency=1319 length=300ms;\
     \n  /log warning \"LOGIN ALERT: new active session\";\
+    \n  /system script set [find name=login-monitor] comment=\$cur;\
     \n};\
-    \n/system script set [find name=login-monitor] comment=\$cur;"
+    \n:if (\$cur < \$prev) do={\
+    \n  /system script set [find name=login-monitor] comment=\$cur;\
+    \n};"
 add comment="0" dont-require-permissions=yes \
     name=ssh-probe-monitor owner=YOUR-ADMIN-USER \
     policy=read,write,test source="\
@@ -457,8 +468,11 @@ add comment="0" dont-require-permissions=yes \
     \n  :beep frequency=523 length=100ms; :delay 30ms;\
     \n  :beep frequency=392 length=200ms;\
     \n  /log warning \"SSH PROBE DETECTED\";\
+    \n  /system script set [find name=ssh-probe-monitor] comment=\$cur;\
     \n};\
-    \n/system script set [find name=ssh-probe-monitor] comment=\$cur;"
+    \n:if (\$cur < \$prev) do={\
+    \n  /system script set [find name=ssh-probe-monitor] comment=\$cur;\
+    \n};"
 add comment="Temperature alert — alarm at 60C" dont-require-permissions=yes \
     name=temp-monitor owner=YOUR-ADMIN-USER policy=read,test source="\
     \n:local temp [/system health get [find name=temperature] value];\
@@ -512,6 +526,7 @@ add comment="0" dont-require-permissions=yes name=wifi-monitor \
     \n  :beep frequency=1319 length=80ms;\
     \n  :delay 50ms;\
     \n  :beep frequency=1568 length=150ms;\
+    \n  /system script set [find name=wifi-monitor] comment=\$current;\
     \n};\
     \n:if (\$current < \$prev) do={\
     \n  :beep frequency=1568 length=80ms;\
@@ -519,8 +534,8 @@ add comment="0" dont-require-permissions=yes name=wifi-monitor \
     \n  :beep frequency=1319 length=80ms;\
     \n  :delay 50ms;\
     \n  :beep frequency=1047 length=150ms;\
-    \n};\
-    \n/system script set [find name=wifi-monitor] comment=\$current;"
+    \n  /system script set [find name=wifi-monitor] comment=\$current;\
+    \n};"
 add comment="DDoS/SSH/port scan blacklist increase alarm" \
     dont-require-permissions=yes name=attack-alarm owner=YOUR-ADMIN-USER \
     policy=test source="\
@@ -572,8 +587,8 @@ add comment="0" dont-require-permissions=yes name=attack-monitor \
     \n  :beep frequency=550 length=50ms; :delay 30ms;\
     \n  :beep frequency=440 length=300ms;\
     \n  /log warning \"ATTACK DETECTED blacklist count increased\";\
-    \n};\
-    \n/system script set [find name=attack-monitor] comment=\$total;"
+    \n  /system script set [find name=attack-monitor] comment=\$total;\
+    \n};"
 add comment="Trigger immediate RSC + encrypted binary backup" \
     dont-require-permissions=no name=manual-backup owner=YOUR-ADMIN-USER \
     policy=read,write,sensitive source=\
@@ -636,6 +651,7 @@ add comment="9" dont-require-permissions=yes name=eth-monitor \
     \n  :beep frequency=523 length=150ms;\
     \n  :delay 50ms;\
     \n  :beep frequency=784 length=300ms;\
+    \n  /system script set [find name=eth-monitor] comment=\$current;\
     \n};\
     \n:if (\$current < \$prev) do={\
     \n  :beep frequency=880 length=200ms;\
@@ -643,8 +659,8 @@ add comment="9" dont-require-permissions=yes name=eth-monitor \
     \n  :beep frequency=660 length=200ms;\
     \n  :delay 50ms;\
     \n  :beep frequency=440 length=400ms;\
-    \n};\
-    \n/system script set [find name=eth-monitor] comment=\$current;"
+    \n  /system script set [find name=eth-monitor] comment=\$current;\
+    \n};"
 add comment="Boot fanfare 0: Tetris Theme A" dont-require-permissions=yes \
     name=fanfare-tetris owner=YOUR-ADMIN-USER policy=test source="\
     \n:beep frequency=659 length=200ms; :delay 50ms;\

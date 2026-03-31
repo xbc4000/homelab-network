@@ -116,6 +116,12 @@ On the very first run after a fresh install (comment = `"0"`), they
 initialise without sounding an alarm. Beeps begin from the second scheduler
 cycle when a real change is detected.
 
+The comment field is only written when the value actually changes — not on
+every poll cycle. This prevents RouterOS from logging a config-change entry
+on every scheduler run, keeping the log window clean. For login-monitor and
+ssh-probe-monitor, the comment is also updated on count decrease so the next
+increase is correctly detected.
+
 ---
 
 ## Netwatch Hosts
