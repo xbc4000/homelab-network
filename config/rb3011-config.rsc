@@ -64,6 +64,18 @@
 #     - usb-check updated to use /disk find slot=usb1-part1 (consistent with
 #       usb-periodic-check) and comment field for reboot counter instead of file.
 #
+#   2026-03-30 — AP upgrade fix
+#     - Router is ARM, APs are MIPSBE — CAPsMAN cannot push packages it does not
+#       have locally. ap-upgrade rewritten to fetch routeros + wireless MIPSBE
+#       packages from MikroTik CDN to usb1-part1/firmware/aps/ before upgrade.
+#     - CAPsMAN manager: package-path=usb1-part1/firmware/aps,
+#       upgrade-policy=require-same-version (was suggest-same-version).
+#     - wan-down-handler and wan-up-handler: alert beeps inlined directly
+#       (removed /system script run calls which caused permission errors and
+#       INVALID flag on the calling script).
+#     - ap-upgrade policy: ftp,read,write,test (ftp required for /tool fetch
+#       to write files to local filesystem).
+#
 #   2026-03-22 — CAPsMAN fix
 #     - Added [IN] CAPsMAN control from APs (UDP 5246/5247 from vlan60-wifi)
 #     - Was missing after VLAN60 input was tightened to DNS+NTP only
@@ -400,11 +412,18 @@ add comment="0" dont-require-permissions=yes \
     \n  :beep frequency=660 length=400ms;\
     \n  /log error \"PPPOE FLAPPING DETECTED\";\
     \n};\
-    \n/system script run alert-wan-down"
+    \n:beep frequency=1000 length=100ms; :delay 100ms;\
+    \n:beep frequency=1000 length=100ms; :delay 100ms;\
+    \n:beep frequency=1000 length=100ms; :delay 100ms;\
+    \n:beep frequency=1000 length=100ms; :delay 100ms;\
+    \n:beep frequency=1000 length=100ms; :delay 300ms;\
+    \n:beep frequency=800 length=300ms; :delay 100ms;\
+    \n:beep frequency=800 length=300ms"
 add comment="WAN up handler — resets PPPoE flap counter" dont-require-permissions=yes \
     name=wan-up-handler owner=YOUR-ADMIN-USER policy=read,write,test source="\
     \n/system script set [find name=wan-down-handler] comment=\"0\";\
-    \n/system script run alert-up"
+    \n:beep frequency=523 length=150ms; :delay 50ms;\
+    \n:beep frequency=784 length=300ms"
 add comment="0" dont-require-permissions=yes \
     name=login-monitor owner=YOUR-ADMIN-USER policy=read,write,test source="\
     \n:local prev [:tonum [/system script get [find name=login-monitor] comment]];\
@@ -769,23 +788,30 @@ add comment="Check RouterOS updates and install with pre-update backup" \
     \n} else={\
     \n  /log info (\"AUTO-UPDATE: RouterOS is up to date (\" . \$current . \")\")\
     \n}"
-# ap-upgrade: push firmware to all connected CAPsMAN APs.
+# ap-upgrade: fetch MIPSBE packages to USB and let CAPsMAN push upgrades automatically.
+# Router is ARM — APs are MIPSBE. CAPsMAN cannot push packages it does not have locally.
 # Runs 20 min after auto-update to allow time for router reboot and CAPsMAN reconnection.
+# Requires: /caps-man manager package-path=usb1-part1/firmware/aps
+#           /caps-man manager upgrade-policy=require-same-version
 add comment="Push firmware upgrades to all connected CAPsMAN APs" \
     dont-require-permissions=yes name=ap-upgrade owner=YOUR-ADMIN-USER \
-    policy=reboot,read,write,policy,test source="\
+    policy=ftp,read,write,test source="\
     \n:local capCount [:len [/caps-man remote-cap find]]\
     \n:if (\$capCount = 0) do={\
-    \n  /log warning \"AP-UPGRADE: No APs connected to CAPsMAN — skipping AP upgrade\"\
-    \n  /log warning \"AP-UPGRADE: Check /caps-man remote-cap print and retry manually\"\
+    \n  /log warning \"AP-UPGRADE: No APs connected to CAPsMAN — skipping\"\
     \n} else={\
-    \n  /log info (\"AP-UPGRADE: \" . \$capCount . \" AP(s) connected — checking firmware\")\
-    \n  :foreach cap in=[/caps-man remote-cap find] do={\
-    \n    :local name [/caps-man remote-cap get \$cap name]\
-    \n    :local ver  [/caps-man remote-cap get \$cap version]\
-    \n    /log info (\"AP-UPGRADE: \" . \$name . \" running \" . \$ver)\
+    \n  :local ver [/system package get [find name=routeros] version]\
+    \n  /log info (\"AP-UPGRADE: \" . \$capCount . \" AP(s) connected, fetching MIPSBE packages for \" . \$ver)\
+    \n  :local pkgs ({\"routeros\"; \"wireless\"})\
+    \n  :foreach pkg in=\$pkgs do={\
+    \n    :local pkgFile (\$pkg . \"-\" . \$ver . \"-mipsbe.npk\")\
+    \n    :local pkgPath (\"usb1-part1/firmware/aps/\" . \$pkgFile)\
+    \n    :if ([:len [/file find name=\$pkgPath]] = 0) do={\
+    \n      /log info (\"AP-UPGRADE: Fetching \" . \$pkgFile)\
+    \n      /tool fetch url=(\"https://download.mikrotik.com/routeros/\" . \$ver . \"/\" . \$pkgFile) dst-path=\$pkgPath\
+    \n    }\
     \n  }\
-    \n  /caps-man remote-cap upgrade [find]\
+    \n  /log info \"AP-UPGRADE: Packages ready, CAPsMAN will push on next AP reconnect\"\
     \n  :beep frequency=523 length=100ms; :delay 50ms\
     \n  :beep frequency=784 length=100ms; :delay 50ms\
     \n  :beep frequency=1047 length=300ms\
@@ -840,8 +866,8 @@ add action=reject comment="Force roaming below -80dBm" signal-range=-120..-80
 add action=accept comment="Allow all authenticated clients"
 add action=reject comment="Default deny all clients"
 /caps-man manager
-set ca-certificate=auto certificate=auto enabled=yes upgrade-policy=\
-    suggest-same-version
+set ca-certificate=auto certificate=auto enabled=yes package-path=\
+    usb1-part1/firmware/aps upgrade-policy=require-same-version
 /caps-man provisioning
 add action=create-dynamic-enabled comment=mAP2nD-1 master-configuration=\
     cfg-map name-format=identity radio-mac=DC:2C:6E:10:54:F1
@@ -1304,7 +1330,7 @@ add comment="Check USB SSD mounted 90s after every boot" disabled=yes \
     policy=reboot,read,write,policy,test start-time=startup
 add comment="Push AP firmware after router update (runs 20min after auto-update)" \
     interval=1w name=ap-upgrade on-event="/system script run ap-upgrade" \
-    policy=reboot,read,write,policy,test start-date=2026-03-23 start-time=03:20:00
+    policy=ftp,read,write,test start-date=2026-03-23 start-time=03:20:00
 add comment="Weekly RouterOS update check and install" interval=1w \
     name=auto-update on-event="/system script run auto-update" \
     policy=reboot,read,write,policy,sensitive,test start-date=2026-03-23 \
