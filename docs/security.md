@@ -64,7 +64,7 @@ Inter-VLAN policy matrix:
 | Server1 | — | ✅ | ✅ | ❌ | ❌ | ✅ (AP mgmt) | ✅ |
 | Server2 | ✅ | — | ✅ | ❌ | ❌ | ✅ (AP mgmt) | ✅ |
 | iDRAC | ✅ | ✅ | — | ✅ | ❌ | ❌ | ❌ |
-| RPi | ❌ | ❌ | ❌ | — | ❌ | ❌ | ✅ |
+| RPi | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ |
 | AV | ❌ | ❌ | ❌ | ❌ | — | ❌ | ✅ |
 | WiFi | ❌ | ❌ | ❌ | ❌ | ❌ | — | ✅ |
 | WiFi | DNS to Pi-hole (172.17.0.2:53) only from container net | | | | | | |

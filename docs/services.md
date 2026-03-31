@@ -57,6 +57,34 @@ BTH users can reach all VLANs including game servers at 10.20.20.3.
 
 ---
 
+## Raspberry Pi 4 — Monitoring & Media (10.40.40.2)
+
+Running DietPi. Hosts all monitoring infrastructure and Spotify Connect.
+
+| Service | Port | Access |
+|---------|------|--------|
+| Portainer | 9002 (HTTP) / 9442 (HTTPS) | Server1, WiFi |
+| Grafana | 3000 | Server1, WiFi |
+| SSH | 22 | Server1, WiFi |
+| Raspotify (Spotify Connect) | — | WiFi (mDNS) |
+
+### Docker Containers (via Portainer)
+
+- **Grafana** — dashboards for all infrastructure metrics
+- **Prometheus / exporters** — metrics scraping from router (mktxp/SNMP), servers (node_exporter), iDRAC, etc.
+- All exporters scrape their targets across VLANs — RPi has full inter-VLAN access for this purpose
+
+### Firewall Summary
+
+- RPi → all internal VLANs: allowed (metrics scraping)
+- RPi → WAN: allowed
+- Server1 → RPi SSH/Grafana/Portainer: allowed
+- WiFi → RPi SSH/Grafana/Portainer: allowed
+- WiFi → RPi (other): blocked by `[FWD] WiFi no RPi`
+- SNMP UDP 161 from RPi to router: allowed (for mktxp)
+
+---
+
 ## AMP Game Panel (Server2 NIC2 — 10.20.20.3)
 
 AMP (Application Management Panel) runs on Server2's second NIC, dedicated

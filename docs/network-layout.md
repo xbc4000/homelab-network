@@ -8,6 +8,7 @@
 | Storage | USB SSD 256GB | Container storage, Dude DB, backups | USB port |
 | Server1 | Dell PER730XD | Workstation — Fedora, daily driver, gaming | Rack |
 | Server2 | Dell PER630 | Ubuntu Server / AMP game panel | Rack |
+| RPi | Raspberry Pi 4 | DietPi, Portainer, Grafana, metrics exporters, Raspotify | Rack |
 | AP1 | mAP2nD-1 | 2.4GHz WiFi ch1, CAPsMAN CAP | Wall |
 | AP2 | wAP2nD-1 | 2.4GHz WiFi ch11, CAPsMAN CAP | Wall |
 
@@ -87,7 +88,7 @@ APs use static IPs above the WiFi pool (10.60.60.200–201).
 | Server1 (VLAN10) | Server2, iDRAC, WiFi APs (mgmt), WAN |
 | Server2 (VLAN20) | Server1, iDRAC, WiFi APs (mgmt), WAN |
 | iDRAC (VLAN30) | Server1, Server2, RPi (metrics only), no WAN |
-| RPi (VLAN40) | WAN only |
+| RPi (VLAN40) | All VLANs (metrics scraping), WAN |
 | AV (VLAN50) | WAN only |
 | WiFi (VLAN60) | WAN + Pi-hole DNS (172.17.0.2:53) only |
 | BTH VPN | All VLANs |

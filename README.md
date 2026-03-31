@@ -22,6 +22,7 @@ hardened, documented, and ready to restore from a factory reset.
 | AP2 | wAP2nD-1 | 2.4 GHz WiFi ch11, CAPsMAN CAP (daisy-chained via mAP) |
 | Server1 | Dell PER730XD | VLAN10 — workstation (Fedora, daily driver, gaming) |
 | Server2 | Dell PER630 | VLAN20 — Ubuntu Server + AMP game panel |
+| RPi | Raspberry Pi 4 | VLAN40 — DietPi, Portainer, Grafana, metrics exporters, Raspotify |
 
 ---
 
@@ -185,6 +186,8 @@ homelab-network/
 | Service | Port | Protocol | Accessible from |
 |---------|------|----------|----------------|
 | Pi-hole web UI | 80 / 443 | TCP | pihole-admin-wifi list, Server1 |
+| Grafana | 3000 | TCP | Server1, WiFi → 10.40.40.2 |
+| Portainer | 9002 / 9442 | TCP | Server1, WiFi → 10.40.40.2 |
 | The Dude | 2210 | TCP | VLAN10 |
 | Back to Home VPN | 65504 | UDP | WAN |
 | Minecraft Java | 25565 | TCP | WAN → 10.20.20.3 |

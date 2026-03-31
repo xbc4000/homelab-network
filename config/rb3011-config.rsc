@@ -64,6 +64,16 @@
 #     - usb-check updated to use /disk find slot=usb1-part1 (consistent with
 #       usb-periodic-check) and comment field for reboot counter instead of file.
 #
+#   2026-03-31 — RPi firewall: open for metrics and management
+#     - RPi can now reach all internal VLANs (Server1, Server2, iDRAC, AV, WiFi)
+#       for Grafana/Prometheus metrics scraping
+#     - Added input accept for SNMP UDP 161 from RPi (mktxp Grafana exporter)
+#     - Added forward accepts for SSH (22) into RPi from Server1 and WiFi VLANs
+#     - Added forward accepts for Grafana (3000) and Portainer (9002, 9442) into
+#       RPi from Server1 and WiFi VLANs
+#     - Removed 5 RPi isolation drops (RPi no Server1/2/iDRAC/AV/WiFi) that
+#       blocked all inter-VLAN access from RPi
+#
 #   2026-03-30 — AP upgrade fix
 #     - Router is ARM, APs are MIPSBE — CAPsMAN cannot push packages it does not
 #       have locally. ap-upgrade rewritten to fetch routeros + wireless MIPSBE
@@ -1035,6 +1045,8 @@ add action=accept chain=input comment="[IN] iDRAC management access" \
     in-interface=vlan30-idrac
 add action=accept chain=input comment="[IN] CAPsMAN control from APs" \
     dst-port=5246,5247 in-interface=vlan60-wifi protocol=udp
+add action=accept chain=input comment="[IN] RPi SNMP for mktxp" dst-port=161 \
+    protocol=udp src-address=10.40.40.2
 add action=accept chain=input comment="[IN] RPi DNS+NTP" dst-port=53,123 \
     in-interface=vlan40-pi protocol=udp
 add action=accept chain=input comment="[IN] RPi DNS TCP" dst-port=53 \
@@ -1108,6 +1120,28 @@ add action=accept chain=forward comment=\
 add action=accept chain=forward comment=\
     "[FWD] Server2 to WiFi AP management (CAPsMAN APs on VLAN60)" \
     dst-address=10.60.60.0/24 src-address=10.20.20.0/24
+add action=accept chain=forward comment="[FWD] RPi to Server1 (metrics)" \
+    dst-address=10.10.10.0/24 src-address=10.40.40.0/24
+add action=accept chain=forward comment="[FWD] RPi to Server2 (metrics)" \
+    dst-address=10.20.20.0/24 src-address=10.40.40.0/24
+add action=accept chain=forward comment="[FWD] RPi to iDRAC (metrics)" \
+    dst-address=10.30.30.0/24 src-address=10.40.40.0/24
+add action=accept chain=forward comment="[FWD] RPi to AV (metrics)" \
+    dst-address=10.50.50.0/24 src-address=10.40.40.0/24
+add action=accept chain=forward comment="[FWD] RPi to WiFi (metrics)" \
+    dst-address=10.60.60.0/24 src-address=10.40.40.0/24
+add action=accept chain=forward comment="[FWD] Server1 SSH to RPi" \
+    dst-address=10.40.40.2 dst-port=22 protocol=tcp src-address=10.10.10.0/24
+add action=accept chain=forward comment="[FWD] WiFi SSH to RPi" \
+    dst-address=10.40.40.2 dst-port=22 protocol=tcp src-address=10.60.60.0/24
+add action=accept chain=forward comment=\
+    "[FWD] Server1 to RPi services (Grafana, Portainer)" \
+    dst-address=10.40.40.2 dst-port=3000,9002,9442 protocol=tcp \
+    src-address=10.10.10.0/24
+add action=accept chain=forward comment=\
+    "[FWD] WiFi to RPi services (Grafana, Portainer)" \
+    dst-address=10.40.40.2 dst-port=3000,9002,9442 protocol=tcp \
+    src-address=10.60.60.0/24
 add action=drop chain=forward comment="[FWD] WiFi no RPi" \
     dst-address=10.40.40.0/24 src-address=10.60.60.0/24
 add action=drop chain=forward comment="[FWD] WiFi no AV" \
@@ -1123,16 +1157,6 @@ add action=accept chain=forward comment="[FWD] WiFi pihole-admin to Pi-hole admi
     src-address-list=pihole-admin-wifi
 add action=drop chain=forward comment="[FWD] WiFi no container net" \
     dst-address=172.17.0.0/24 src-address=10.60.60.0/24
-add action=drop chain=forward comment="[FWD] RPi no Server1" \
-    dst-address=10.10.10.0/24 src-address=10.40.40.0/24
-add action=drop chain=forward comment="[FWD] RPi no Server2" \
-    dst-address=10.20.20.0/24 src-address=10.40.40.0/24
-add action=drop chain=forward comment="[FWD] RPi no iDRAC" \
-    dst-address=10.30.30.0/24 src-address=10.40.40.0/24
-add action=drop chain=forward comment="[FWD] RPi no AV" \
-    dst-address=10.50.50.0/24 src-address=10.40.40.0/24
-add action=drop chain=forward comment="[FWD] RPi no WiFi" \
-    dst-address=10.60.60.0/24 src-address=10.40.40.0/24
 add action=drop chain=forward comment="[FWD] No access to AV from any VLAN" \
     dst-address=10.50.50.0/24
 add action=accept chain=forward comment="[FWD] WAN Minecraft Java" \
