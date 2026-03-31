@@ -114,6 +114,9 @@ usb1-part1/
 │   ├── daily/                 # Daily RSC config export (runs at 03:00)
 │   ├── weekly/                # Weekly encrypted binary backup (runs at 02:00 Fridays)
 │   └── pre-update/            # Encrypted backup taken automatically before any RouterOS upgrade
+├── firmware/
+│   ├── aps/                   # MIPSBE packages served by CAPsMAN to APs (routeros, wireless)
+│   └── router/                # Reserved for router firmware (ARM)
 ├── dude/                      # The Dude database and config
 └── logs/                      # Router log exports (manual)
 ```

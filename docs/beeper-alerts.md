@@ -33,10 +33,11 @@ servers, and schedulers.
 
 ### WAN Down Handler (`wan-down-handler`)
 
-Wraps `alert-wan-down` with PPPoE flap detection. Counts consecutive WAN
-down events using global variable `$wanDownCount`. On 3+ consecutive drops,
-plays an additional alarm pattern and logs `PPPOE FLAPPING DETECTED`. Then
-calls `alert-wan-down` regardless.
+Wraps the WAN down alert tone with PPPoE flap detection. Counts consecutive
+WAN down events using the script comment field (same persistent state pattern
+as the monitor scripts). On 3+ consecutive drops, plays an additional alarm
+pattern and logs `PPPOE FLAPPING DETECTED`. Then plays the WAN down tone
+regardless. The counter resets to 0 when `wan-up-handler` fires on recovery.
 
 ---
 
@@ -77,10 +78,10 @@ forward firewall.
 These scripts poll a condition on a schedule and play an alert tone when
 something changes or exceeds a threshold.
 
-**State persistence**: `wifi-monitor`, `eth-monitor`, and `attack-monitor`
-store their previous state in the script's own **comment field** — not global
-variables. Global variables do not persist between separate scheduled runs in
-RouterOS 7.22. The comment field is persistent and survives reboots.
+**State persistence**: All monitor scripts store their previous state in the
+script's own **comment field** — not global variables. Global variables do not
+persist between separate scheduled runs in RouterOS 7.22. The comment field is
+persistent and survives reboots.
 
 | Scheduler | Script | Interval | What it watches |
 |-----------|--------|----------|----------------|
@@ -110,10 +111,10 @@ RouterOS 7.22. The comment field is persistent and survives reboots.
 
 ### First-Run Behaviour
 
-`wifi-monitor`, `eth-monitor`, and `attack-monitor` store their previous
-count in the script comment field. On the very first run after a fresh
-install (comment = `"0"`), they initialise without sounding an alarm. Beeps
-begin from the second scheduler cycle when a real change is detected.
+All monitor scripts store their previous count in the script comment field.
+On the very first run after a fresh install (comment = `"0"`), they
+initialise without sounding an alarm. Beeps begin from the second scheduler
+cycle when a real change is detected.
 
 ---
 

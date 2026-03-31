@@ -1,8 +1,8 @@
-# RB3011 Home Lab — RouterOS 7.22
+# RB3011 Home Lab — RouterOS 7.22.1
 
 ```
 ╔══════════════════════════════════════════════════════════════════╗
-║  RB3011-GW  ·  RouterOS 7.22  ·  MikroTik RB3011UiAS             ║
+║  RB3011-GW  ·  RouterOS 7.22.1  ·  MikroTik RB3011UiAS           ║
 ║  6 VLANs  ·  CAPsMAN  ·  Pi-hole v6  ·  WireGuard VPN            ║
 ╚══════════════════════════════════════════════════════════════════╝
 ```
@@ -78,7 +78,7 @@ Internet (PPPoE CGNAT)
 - **Per-device WiFi tones** — known phones get distinct DHCP lease melodies
 
 ### Security
-- **SSH brute-force ladder** — 4 attempts → 10-day blacklist (3-stage addreslist chain)
+- **SSH brute-force ladder** — 4 attempts → 10-day blacklist (3-stage address-list chain)
 - **Port scanner detection** — PSD 21/3s → 2-week blacklist
 - **DDoS protection** — ICMP rate limiting, DNS/NTP/SSDP amplification drops
 - **RAW chain** — bogon, RFC1918, CGNAT src drops before routing
@@ -124,7 +124,7 @@ Internet (PPPoE CGNAT)
 ## Repository Structure
 
 ```
-homelab-network-1/
+homelab-network/
 ├── config/
 │   └── rb3011-config.rsc        # Complete router config (credentials redacted)
 ├── aps/
@@ -243,7 +243,7 @@ DNS allow-remote-requests disabled, MAC server lockdown, CAP mode.
 - Daily RSC backup is plaintext (PPPoE username visible) — stored on USB SSD only
 - ISP is currently CGNAT (`10.71.x.x`) — game server port forwarding rules are in
   place but inactive until ISP provides a public IP
-- RouterOS version: **7.22** (stable, 2026-03-09)
+- RouterOS version: **7.22.1** (stable, 2026-03-23)
 
 ---
 

@@ -155,7 +155,7 @@ future-proofing:
 ## CAPsMAN Security
 
 - DTLS encryption between router and APs (certificate=auto, ca-certificate=auto)
-- AP firmware upgrade policy: suggest-same-version
+- AP firmware upgrade policy: require-same-version
 - Access list: roaming reject (-120..-80 dBm) → accept all → default deny
 - Client-to-client forwarding: enabled (required for Roku, Chromecast, mDNS, Spotify Connect)
 
