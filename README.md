@@ -20,7 +20,7 @@ hardened, documented, and ready to restore from a factory reset.
 | Storage | USB SSD 256 GB | Container storage, Dude DB, backups |
 | AP1 | mAP2nD-1 | 2.4 GHz WiFi ch1, CAPsMAN CAP |
 | AP2 | wAP2nD-1 | 2.4 GHz WiFi ch11, CAPsMAN CAP (daisy-chained via mAP) |
-| Server1 | Dell PER730XD | VLAN10 — hypervisor |
+| Server1 | Dell PER730XD | VLAN10 — workstation (Fedora, daily driver, gaming) |
 | Server2 | Dell PER630 | VLAN20 — Ubuntu Server + AMP game panel |
 
 ---

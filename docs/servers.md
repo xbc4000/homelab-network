@@ -7,10 +7,10 @@ Both servers run Fedora and use NetworkManager (`nmcli`) for network config.
 
 ## Overview
 
-| Server | Model | VLAN | IP | Bond | Status |
-|--------|-------|------|----|------|--------|
-| Server1 | Dell PER730XD | VLAN10 | 10.10.10.2/24 | bond0 active-backup | ✅ Done |
-| Server2 | Dell PER630 | VLAN20 | 10.20.20.2/24 | bond0 active-backup | ⏳ Pending |
+| Server | Model | VLAN | IP | Bond | Role | Status |
+|--------|-------|------|----|------|------|--------|
+| Server1 | Dell PER730XD | VLAN10 | 10.10.10.2/24 | bond0 active-backup | Workstation — Fedora, daily driver, gaming | ✅ Done |
+| Server2 | Dell PER630 | VLAN20 | 10.20.20.2/24 | bond0 active-backup | Ubuntu Server + AMP game panel | ⏳ Pending |
 
 ---
 

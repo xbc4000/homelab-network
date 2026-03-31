@@ -6,7 +6,7 @@
 |--------|-------|------|----------|
 | Router | RB3011UiAS | Core router, CAPsMAN controller, container host | Rack |
 | Storage | USB SSD 256GB | Container storage, Dude DB, backups | USB port |
-| Server1 | Dell PER730XD | Hypervisor / primary server | Rack |
+| Server1 | Dell PER730XD | Workstation — Fedora, daily driver, gaming | Rack |
 | Server2 | Dell PER630 | Ubuntu Server / AMP game panel | Rack |
 | AP1 | mAP2nD-1 | 2.4GHz WiFi ch1, CAPsMAN CAP | Wall |
 | AP2 | wAP2nD-1 | 2.4GHz WiFi ch11, CAPsMAN CAP | Wall |
@@ -37,7 +37,7 @@
 
 | VLAN | Name | Subnet | Gateway | Purpose |
 |------|------|--------|---------|---------|
-| 10 | vlan10-server1 | 10.10.10.0/24 | 10.10.10.1 | Server1 (PER730XD) |
+| 10 | vlan10-server1 | 10.10.10.0/24 | 10.10.10.1 | Server1 (PER730XD) — workstation |
 | 20 | vlan20-server2 | 10.20.20.0/24 | 10.20.20.1 | Server2 (PER630) + AMP |
 | 30 | vlan30-idrac | 10.30.30.0/24 | 10.30.30.1 | iDRAC OOB management |
 | 40 | vlan40-pi | 10.40.40.0/24 | 10.40.40.1 | Raspberry Pi |
