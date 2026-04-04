@@ -15,7 +15,7 @@
       }
     ]
   },
-  "description": "Live Docker container metrics from cAdvisor \u2014 CPU, memory, network, disk per container",
+  "description": "Live Docker container metrics via Telegraf docker input \u2014 CPU, memory, network, disk I/O per container",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
@@ -28,7 +28,6 @@
       "tags": [],
       "targetBlank": true,
       "title": "\ud83d\udd17 Portainer",
-      "tooltip": "Open Portainer",
       "type": "link",
       "url": "http://10.40.40.2:9002"
     },
@@ -40,7 +39,6 @@
       "tags": [],
       "targetBlank": true,
       "title": "\ud83d\udd17 Prometheus",
-      "tooltip": "Open Prometheus",
       "type": "link",
       "url": "http://10.40.40.2:9090"
     }
@@ -61,8 +59,8 @@
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "${prom_ds}"
+        "type": "influxdb",
+        "uid": "bfecel4s1xpfke"
       },
       "fieldConfig": {
         "defaults": {
@@ -112,14 +110,13 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${prom_ds}"
+            "type": "influxdb",
+            "uid": "bfecel4s1xpfke"
           },
-          "expr": "count(container_last_seen{name!=\"\",name!=\"/\",image!=\"\"})",
+          "query": "SELECT last(\"n_containers_running\") FROM \"docker\" WHERE $timeFilter",
+          "rawQuery": true,
           "refId": "A",
-          "legendFormat": "",
-          "instant": false,
-          "range": true
+          "resultFormat": "time_series"
         }
       ],
       "title": "Running Containers",
@@ -127,13 +124,13 @@
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "${prom_ds}"
+        "type": "influxdb",
+        "uid": "bfecel4s1xpfke"
       },
       "fieldConfig": {
         "defaults": {
           "color": {
-            "fixedColor": "rgb(0,183,255)",
+            "fixedColor": "rgb(255,7,58)",
             "mode": "fixed"
           },
           "mappings": [],
@@ -141,13 +138,13 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "rgb(0,183,255)",
+                "color": "rgb(255,7,58)",
                 "value": 0
               }
             ]
           },
-          "unit": "percent",
-          "decimals": 1
+          "unit": "none",
+          "noValue": "0"
         },
         "overrides": []
       },
@@ -173,29 +170,29 @@
         },
         "showPercentChange": false,
         "textMode": "auto",
-        "wideLayout": true
+        "wideLayout": true,
+        "noValue": "0"
       },
       "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${prom_ds}"
+            "type": "influxdb",
+            "uid": "bfecel4s1xpfke"
           },
-          "expr": "sum(rate(container_cpu_usage_seconds_total{name!=\"\",name!=\"/\",image!=\"\"}[2m])) * 100",
+          "query": "SELECT last(\"n_containers_stopped\") FROM \"docker\" WHERE $timeFilter",
+          "rawQuery": true,
           "refId": "A",
-          "legendFormat": "",
-          "instant": false,
-          "range": true
+          "resultFormat": "time_series"
         }
       ],
-      "title": "Total CPU Cores Used",
+      "title": "Stopped Containers",
       "type": "stat"
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "${prom_ds}"
+        "type": "influxdb",
+        "uid": "bfecel4s1xpfke"
       },
       "fieldConfig": {
         "defaults": {
@@ -213,7 +210,7 @@
               }
             ]
           },
-          "unit": "bytes"
+          "unit": "none"
         },
         "overrides": []
       },
@@ -245,17 +242,82 @@
       "targets": [
         {
           "datasource": {
+            "type": "influxdb",
+            "uid": "bfecel4s1xpfke"
+          },
+          "query": "SELECT last(\"n_images\") FROM \"docker\" WHERE $timeFilter",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series"
+        }
+      ],
+      "title": "Total Images",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prom_ds}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "percent",
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 12,
+        "y": 1
+      },
+      "id": 5,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.4.2",
+      "targets": [
+        {
+          "datasource": {
             "type": "prometheus",
             "uid": "${prom_ds}"
           },
-          "expr": "sum(container_memory_usage_bytes{name!=\"\",name!=\"/\",image!=\"\"})",
+          "expr": "100 - avg(rate(node_cpu_seconds_total{mode=\"idle\"}[2m])) * 100",
           "refId": "A",
           "legendFormat": "",
           "instant": false,
           "range": true
         }
       ],
-      "title": "Container Memory Used",
+      "title": "Host CPU %",
       "type": "stat"
     },
     {
@@ -285,11 +347,11 @@
       },
       "gridPos": {
         "h": 3,
-        "w": 4,
-        "x": 12,
+        "w": 3,
+        "x": 15,
         "y": 1
       },
-      "id": 5,
+      "id": 6,
       "options": {
         "colorMode": "none",
         "graphMode": "none",
@@ -314,7 +376,7 @@
             "type": "prometheus",
             "uid": "${prom_ds}"
           },
-          "expr": "node_memory_MemAvailable_bytes{instance=\"10.40.40.2:9100\"}",
+          "expr": "node_memory_MemAvailable_bytes",
           "refId": "A",
           "legendFormat": "",
           "instant": false,
@@ -322,6 +384,72 @@
         }
       ],
       "title": "Host Memory Free",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prom_ds}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "percent",
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 3,
+        "x": 18,
+        "y": 1
+      },
+      "id": 7,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.4.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prom_ds}"
+          },
+          "expr": "(1 - node_filesystem_free_bytes{mountpoint=\"/\"} / node_filesystem_size_bytes{mountpoint=\"/\"}) * 100",
+          "refId": "A",
+          "legendFormat": "",
+          "instant": false,
+          "range": true
+        }
+      ],
+      "title": "Host Disk Used %",
       "type": "stat"
     },
     {
@@ -352,11 +480,11 @@
       },
       "gridPos": {
         "h": 3,
-        "w": 4,
-        "x": 16,
+        "w": 3,
+        "x": 21,
         "y": 1
       },
-      "id": 6,
+      "id": 8,
       "options": {
         "colorMode": "none",
         "graphMode": "none",
@@ -381,7 +509,7 @@
             "type": "prometheus",
             "uid": "${prom_ds}"
           },
-          "expr": "time() - node_boot_time_seconds{instance=\"10.40.40.2:9100\"}",
+          "expr": "time() - node_boot_time_seconds",
           "refId": "A",
           "legendFormat": "",
           "instant": false,
@@ -393,75 +521,8 @@
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "${prom_ds}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "fixedColor": "rgb(0, 255, 136)",
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "rgb(0,255,136)",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "percent",
-          "decimals": 1
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 3,
-        "w": 4,
-        "x": 20,
-        "y": 1
-      },
-      "id": 7,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "center",
-        "orientation": "auto",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "pluginVersion": "12.4.2",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${prom_ds}"
-          },
-          "expr": "(1 - node_filesystem_free_bytes{instance=\"10.40.40.2:9100\",mountpoint=\"/\"} / node_filesystem_size_bytes{instance=\"10.40.40.2:9100\",mountpoint=\"/\"}) * 100",
-          "refId": "A",
-          "legendFormat": "",
-          "instant": false,
-          "range": true
-        }
-      ],
-      "title": "Host Disk Used %",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${prom_ds}"
+        "type": "influxdb",
+        "uid": "bfecel4s1xpfke"
       },
       "fieldConfig": {
         "defaults": {
@@ -469,7 +530,7 @@
             "mode": "thresholds"
           },
           "custom": {
-            "align": "left",
+            "align": "center",
             "cellOptions": {
               "type": "auto"
             },
@@ -499,7 +560,7 @@
             "properties": [
               {
                 "id": "custom.width",
-                "value": 180
+                "value": 160
               },
               {
                 "id": "custom.cellOptions",
@@ -513,31 +574,58 @@
                   "fixedColor": "rgb(0,255,136)",
                   "mode": "fixed"
                 }
+              },
+              {
+                "id": "custom.align",
+                "value": "left"
               }
             ]
           },
           {
             "matcher": {
               "id": "byName",
-              "options": "Image"
+              "options": "Status"
             },
             "properties": [
               {
                 "id": "custom.width",
-                "value": 260
-              },
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "rgb(120,120,140)",
-                  "mode": "fixed"
-                }
+                "value": 90
               },
               {
                 "id": "custom.cellOptions",
                 "value": {
-                  "type": "color-text"
+                  "type": "colored-background"
                 }
+              },
+              {
+                "id": "custom.align",
+                "value": "center"
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "running": {
+                        "color": "rgb(0,255,136)",
+                        "text": "running"
+                      },
+                      "exited": {
+                        "color": "rgb(255,7,58)",
+                        "text": "exited"
+                      },
+                      "paused": {
+                        "color": "rgb(255,184,0)",
+                        "text": "paused"
+                      },
+                      "created": {
+                        "color": "rgb(0,183,255)",
+                        "text": "created"
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
               }
             ]
           },
@@ -549,7 +637,7 @@
             "properties": [
               {
                 "id": "custom.width",
-                "value": 100
+                "value": 110
               },
               {
                 "id": "unit",
@@ -577,6 +665,10 @@
                   "fixedColor": "rgb(0,183,255)",
                   "mode": "fixed"
                 }
+              },
+              {
+                "id": "custom.align",
+                "value": "center"
               }
             ]
           },
@@ -588,7 +680,7 @@
             "properties": [
               {
                 "id": "custom.width",
-                "value": 110
+                "value": 120
               },
               {
                 "id": "unit",
@@ -612,38 +704,59 @@
                   "fixedColor": "rgb(0,183,255)",
                   "mode": "fixed"
                 }
+              },
+              {
+                "id": "custom.align",
+                "value": "center"
               }
             ]
           },
           {
             "matcher": {
               "id": "byName",
-              "options": "Uptime"
+              "options": "Mem %"
             },
             "properties": [
               {
                 "id": "custom.width",
-                "value": 100
+                "value": 80
               },
               {
                 "id": "unit",
-                "value": "s"
+                "value": "percent"
               },
               {
                 "id": "decimals",
-                "value": 0
+                "value": 1
+              },
+              {
+                "id": "custom.align",
+                "value": "center"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "rgb(0,255,136)",
+                      "value": 0
+                    },
+                    {
+                      "color": "rgb(255,184,0)",
+                      "value": 70
+                    },
+                    {
+                      "color": "rgb(255,7,58)",
+                      "value": 90
+                    }
+                  ]
+                }
               },
               {
                 "id": "custom.cellOptions",
                 "value": {
                   "type": "color-text"
-                }
-              },
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "rgb(200,200,220)",
-                  "mode": "fixed"
                 }
               }
             ]
@@ -661,6 +774,10 @@
               {
                 "id": "unit",
                 "value": "Bps"
+              },
+              {
+                "id": "custom.align",
+                "value": "center"
               },
               {
                 "id": "custom.cellOptions",
@@ -692,6 +809,10 @@
                 "value": "Bps"
               },
               {
+                "id": "custom.align",
+                "value": "center"
+              },
+              {
                 "id": "custom.cellOptions",
                 "value": {
                   "type": "color-text"
@@ -705,90 +826,155 @@
                 }
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Uptime"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 100
+              },
+              {
+                "id": "unit",
+                "value": "ns"
+              },
+              {
+                "id": "custom.align",
+                "value": "center"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "rgb(200,200,220)",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Time"
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "viz": true,
+                  "tooltip": true,
+                  "legend": true
+                }
+              }
+            ]
           }
         ]
       },
       "gridPos": {
-        "h": 9,
+        "h": 10,
         "w": 24,
         "x": 0,
         "y": 4
       },
-      "id": 8,
+      "id": 9,
       "options": {
-        "cellHeight": "md",
+        "cellHeight": "sm",
         "showHeader": true
       },
       "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${prom_ds}"
+            "type": "influxdb",
+            "uid": "bfecel4s1xpfke"
           },
-          "expr": "container_memory_usage_bytes{name!=\"\",name!=\"/\",image!=\"\"}",
-          "refId": "Memory",
-          "legendFormat": "{{name}}",
-          "instant": true
+          "query": "SELECT last(\"container_status\") FROM \"docker_container_status\" WHERE $timeFilter GROUP BY \"container_name\" ORDER BY time DESC LIMIT 1",
+          "rawQuery": true,
+          "refId": "Status",
+          "resultFormat": "table",
+          "alias": "[[tag_container_name]]"
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${prom_ds}"
+            "type": "influxdb",
+            "uid": "bfecel4s1xpfke"
           },
-          "expr": "rate(container_cpu_usage_seconds_total{name!=\"\",name!=\"/\",image!=\"\"}[2m])*100",
+          "query": "SELECT last(\"usage_percent\") FROM \"docker_container_cpu\" WHERE $timeFilter GROUP BY \"container_name\" ORDER BY time DESC LIMIT 1",
+          "rawQuery": true,
           "refId": "CPU",
-          "legendFormat": "{{name}}",
-          "instant": true
+          "resultFormat": "table",
+          "alias": "[[tag_container_name]]"
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${prom_ds}"
+            "type": "influxdb",
+            "uid": "bfecel4s1xpfke"
           },
-          "expr": "time() - container_start_time_seconds{name!=\"\",name!=\"/\",image!=\"\"}",
-          "refId": "Uptime",
-          "legendFormat": "{{name}}",
-          "instant": true
+          "query": "SELECT last(\"usage\") FROM \"docker_container_mem\" WHERE $timeFilter GROUP BY \"container_name\" ORDER BY time DESC LIMIT 1",
+          "rawQuery": true,
+          "refId": "Mem",
+          "resultFormat": "table",
+          "alias": "[[tag_container_name]]"
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${prom_ds}"
+            "type": "influxdb",
+            "uid": "bfecel4s1xpfke"
           },
-          "expr": "rate(container_network_receive_bytes_total{name!=\"\",name!=\"/\",image!=\"\"}[2m])",
+          "query": "SELECT last(\"usage_percent\") FROM \"docker_container_mem\" WHERE $timeFilter GROUP BY \"container_name\" ORDER BY time DESC LIMIT 1",
+          "rawQuery": true,
+          "refId": "MemPct",
+          "resultFormat": "table",
+          "alias": "[[tag_container_name]]"
+        },
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "bfecel4s1xpfke"
+          },
+          "query": "SELECT non_negative_derivative(last(\"rx_bytes\"),1s) FROM \"docker_container_net\" WHERE $timeFilter GROUP BY \"container_name\" ORDER BY time DESC LIMIT 1",
+          "rawQuery": true,
           "refId": "NetRX",
-          "legendFormat": "{{name}}",
-          "instant": true
+          "resultFormat": "table",
+          "alias": "[[tag_container_name]]"
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${prom_ds}"
+            "type": "influxdb",
+            "uid": "bfecel4s1xpfke"
           },
-          "expr": "rate(container_network_transmit_bytes_total{name!=\"\",name!=\"/\",image!=\"\"}[2m])",
+          "query": "SELECT non_negative_derivative(last(\"tx_bytes\"),1s) FROM \"docker_container_net\" WHERE $timeFilter GROUP BY \"container_name\" ORDER BY time DESC LIMIT 1",
+          "rawQuery": true,
           "refId": "NetTX",
-          "legendFormat": "{{name}}",
-          "instant": true
+          "resultFormat": "table",
+          "alias": "[[tag_container_name]]"
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${prom_ds}"
+            "type": "influxdb",
+            "uid": "bfecel4s1xpfke"
           },
-          "expr": "label_replace(container_last_seen{name!=\"\",name!=\"/\",image!=\"\"}, \"x\",\"\",\"\",\"\")",
-          "refId": "Image",
-          "legendFormat": "{{name}}",
-          "instant": true
+          "query": "SELECT last(\"uptime_ns\") FROM \"docker_container_status\" WHERE $timeFilter GROUP BY \"container_name\" ORDER BY time DESC LIMIT 1",
+          "rawQuery": true,
+          "refId": "Uptime",
+          "resultFormat": "table",
+          "alias": "[[tag_container_name]]"
         }
       ],
       "title": "Container Overview",
       "transformations": [
         {
-          "id": "joinByField",
+          "id": "merge",
           "options": {
-            "byField": "name",
-            "mode": "outer"
+            "reducers": []
           }
         },
         {
@@ -796,54 +982,18 @@
           "options": {
             "excludeByName": {
               "Time": true,
-              "Time 1": true,
-              "Time 2": true,
-              "Time 3": true,
-              "Time 4": true,
-              "Time 5": true,
-              "Time 6": true,
-              "__name__": true,
-              "__name__ 1": true,
-              "__name__ 2": true,
-              "__name__ 3": true,
-              "__name__ 4": true,
-              "__name__ 5": true,
-              "__name__ 6": true,
-              "Value #Image": true,
-              "id": true,
-              "instance": true,
-              "instance 1": true,
-              "instance 2": true,
-              "instance 3": true,
-              "instance 4": true,
-              "instance 5": true,
-              "job": true,
-              "job 1": true,
-              "job 2": true,
-              "job 3": true,
-              "job 4": true,
-              "job 5": true,
-              "name": true,
-              "interface 1": true,
-              "interface 2": true,
-              "interface 3": true,
-              "interface 4": true
-            },
-            "indexByName": {
-              "image": 1,
-              "Value #CPU": 2,
-              "Value #Memory": 3,
-              "Value #NetRX": 4,
-              "Value #NetTX": 5,
-              "Value #Uptime": 6
+              "container_name": true
             },
             "renameByName": {
-              "image": "Image",
+              "container_name": "Container",
+              "Value #Status": "Status",
               "Value #CPU": "CPU %",
-              "Value #Memory": "Memory",
+              "Value #Mem": "Memory",
+              "Value #MemPct": "Mem %",
               "Value #NetRX": "Net RX/s",
               "Value #NetTX": "Net TX/s",
-              "Value #Uptime": "Uptime"
+              "Value #Uptime": "Uptime",
+              "Metric": "Container"
             }
           }
         }
@@ -856,17 +1006,17 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 13
+        "y": 14
       },
-      "id": 9,
+      "id": 10,
       "panels": [],
       "title": "\ud83d\udcca  CPU & MEMORY",
       "type": "row"
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "${prom_ds}"
+        "type": "influxdb",
+        "uid": "bfecel4s1xpfke"
       },
       "fieldConfig": {
         "defaults": {
@@ -925,9 +1075,9 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 14
+        "y": 15
       },
-      "id": 10,
+      "id": 11,
       "options": {
         "legend": {
           "calcs": [
@@ -949,14 +1099,14 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${prom_ds}"
+            "type": "influxdb",
+            "uid": "bfecel4s1xpfke"
           },
-          "expr": "rate(container_cpu_usage_seconds_total{name!=\"\",name!=\"/\",image!=\"\"}[2m])*100",
+          "query": "SELECT mean(\"usage_percent\") FROM \"docker_container_cpu\" WHERE $timeFilter GROUP BY time($__interval), \"container_name\" fill(none)",
+          "rawQuery": true,
           "refId": "A",
-          "legendFormat": "{{name}}",
-          "instant": false,
-          "range": true
+          "resultFormat": "time_series",
+          "alias": "[[tag_container_name]]"
         }
       ],
       "title": "CPU Usage % \u2014 per Container",
@@ -964,8 +1114,8 @@
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "${prom_ds}"
+        "type": "influxdb",
+        "uid": "bfecel4s1xpfke"
       },
       "fieldConfig": {
         "defaults": {
@@ -1024,9 +1174,9 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 14
+        "y": 15
       },
-      "id": 11,
+      "id": 12,
       "options": {
         "legend": {
           "calcs": [
@@ -1048,14 +1198,14 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${prom_ds}"
+            "type": "influxdb",
+            "uid": "bfecel4s1xpfke"
           },
-          "expr": "container_memory_usage_bytes{name!=\"\",name!=\"/\",image!=\"\"}",
+          "query": "SELECT mean(\"usage\") FROM \"docker_container_mem\" WHERE $timeFilter GROUP BY time($__interval), \"container_name\" fill(none)",
+          "rawQuery": true,
           "refId": "A",
-          "legendFormat": "{{name}}",
-          "instant": false,
-          "range": true
+          "resultFormat": "time_series",
+          "alias": "[[tag_container_name]]"
         }
       ],
       "title": "Memory Usage \u2014 per Container",
@@ -1063,8 +1213,8 @@
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "${prom_ds}"
+        "type": "influxdb",
+        "uid": "bfecel4s1xpfke"
       },
       "fieldConfig": {
         "defaults": {
@@ -1080,7 +1230,7 @@
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
-            "fillOpacity": 10,
+            "fillOpacity": 15,
             "gradientMode": "opacity",
             "hideFrom": {
               "legend": false,
@@ -1123,9 +1273,9 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 21
+        "y": 22
       },
-      "id": 12,
+      "id": 13,
       "options": {
         "legend": {
           "calcs": [
@@ -1147,17 +1297,17 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${prom_ds}"
+            "type": "influxdb",
+            "uid": "bfecel4s1xpfke"
           },
-          "expr": "container_memory_usage_bytes{name!=\"\",name!=\"/\",image!=\"\"} / container_spec_memory_limit_bytes{name!=\"\",name!=\"/\",image!=\"\",spec_memory_limit_bytes!=\"0\"} * 100",
+          "query": "SELECT mean(\"usage_percent\") FROM \"docker_container_mem\" WHERE $timeFilter GROUP BY time($__interval), \"container_name\" fill(none)",
+          "rawQuery": true,
           "refId": "A",
-          "legendFormat": "{{name}}",
-          "instant": false,
-          "range": true
+          "resultFormat": "time_series",
+          "alias": "[[tag_container_name]]"
         }
       ],
-      "title": "Memory Usage % of Limit",
+      "title": "Memory % of Total \u2014 per Container",
       "type": "timeseries"
     },
     {
@@ -1166,17 +1316,17 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 27
+        "y": 28
       },
-      "id": 13,
+      "id": 14,
       "panels": [],
       "title": "\ud83c\udf10  NETWORK I/O",
       "type": "row"
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "${prom_ds}"
+        "type": "influxdb",
+        "uid": "bfecel4s1xpfke"
       },
       "fieldConfig": {
         "defaults": {
@@ -1235,106 +1385,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 28
-      },
-      "id": 14,
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull",
-            "mean",
-            "max"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "pluginVersion": "12.4.2",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${prom_ds}"
-          },
-          "expr": "rate(container_network_receive_bytes_total{name!=\"\",name!=\"/\",image!=\"\"}[2m])",
-          "refId": "A",
-          "legendFormat": "{{name}}",
-          "instant": false,
-          "range": true
-        }
-      ],
-      "title": "Network RX \u2014 bytes/s",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${prom_ds}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 15,
-            "gradientMode": "opacity",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "showValues": false,
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "Bps"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 12,
-        "x": 12,
-        "y": 28
+        "y": 29
       },
       "id": 15,
       "options": {
@@ -1358,135 +1409,23 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${prom_ds}"
+            "type": "influxdb",
+            "uid": "bfecel4s1xpfke"
           },
-          "expr": "rate(container_network_transmit_bytes_total{name!=\"\",name!=\"/\",image!=\"\"}[2m])",
+          "query": "SELECT non_negative_derivative(max(\"rx_bytes\"),1s) FROM \"docker_container_net\" WHERE $timeFilter GROUP BY time($__interval), \"container_name\" fill(none)",
+          "rawQuery": true,
           "refId": "A",
-          "legendFormat": "{{name}}",
-          "instant": false,
-          "range": true
+          "resultFormat": "time_series",
+          "alias": "[[tag_container_name]]"
         }
       ],
-      "title": "Network TX \u2014 bytes/s",
-      "type": "timeseries"
-    },
-    {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 35
-      },
-      "id": 16,
-      "panels": [],
-      "title": "\ud83d\udcbe  DISK I/O",
-      "type": "row"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${prom_ds}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "line",
-            "fillOpacity": 15,
-            "gradientMode": "opacity",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "showValues": false,
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "Bps"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 12,
-        "x": 0,
-        "y": 36
-      },
-      "id": 17,
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull",
-            "mean",
-            "max"
-          ],
-          "displayMode": "table",
-          "placement": "right",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "pluginVersion": "12.4.2",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${prom_ds}"
-          },
-          "expr": "rate(container_blkio_device_usage_total{name!=\"\",name!=\"/\",image!=\"\",operation=\"Read\"}[2m])",
-          "refId": "A",
-          "legendFormat": "{{name}}",
-          "instant": false,
-          "range": true
-        }
-      ],
-      "title": "Disk Read \u2014 bytes/s",
+      "title": "Network RX \u2014 bytes/s",
       "type": "timeseries"
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "${prom_ds}"
+        "type": "influxdb",
+        "uid": "bfecel4s1xpfke"
       },
       "fieldConfig": {
         "defaults": {
@@ -1545,7 +1484,119 @@
         "h": 7,
         "w": 12,
         "x": 12,
+        "y": 29
+      },
+      "id": 16,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "mean",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "12.4.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "bfecel4s1xpfke"
+          },
+          "query": "SELECT non_negative_derivative(max(\"tx_bytes\"),1s) FROM \"docker_container_net\" WHERE $timeFilter GROUP BY time($__interval), \"container_name\" fill(none)",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series",
+          "alias": "[[tag_container_name]]"
+        }
+      ],
+      "title": "Network TX \u2014 bytes/s",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
         "y": 36
+      },
+      "id": 17,
+      "panels": [],
+      "title": "\ud83d\udcbe  DISK I/O",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "bfecel4s1xpfke"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "Bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 37
       },
       "id": 18,
       "options": {
@@ -1569,14 +1620,113 @@
       "targets": [
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "${prom_ds}"
+            "type": "influxdb",
+            "uid": "bfecel4s1xpfke"
           },
-          "expr": "rate(container_blkio_device_usage_total{name!=\"\",name!=\"/\",image!=\"\",operation=\"Write\"}[2m])",
+          "query": "SELECT non_negative_derivative(max(\"io_service_bytes_recursive_read\"),1s) FROM \"docker_container_blkio\" WHERE $timeFilter GROUP BY time($__interval), \"container_name\" fill(none)",
+          "rawQuery": true,
           "refId": "A",
-          "legendFormat": "{{name}}",
-          "instant": false,
-          "range": true
+          "resultFormat": "time_series",
+          "alias": "[[tag_container_name]]"
+        }
+      ],
+      "title": "Disk Read \u2014 bytes/s",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "bfecel4s1xpfke"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "Bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 37
+      },
+      "id": 19,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "mean",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "pluginVersion": "12.4.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "bfecel4s1xpfke"
+          },
+          "query": "SELECT non_negative_derivative(max(\"io_service_bytes_recursive_write\"),1s) FROM \"docker_container_blkio\" WHERE $timeFilter GROUP BY time($__interval), \"container_name\" fill(none)",
+          "rawQuery": true,
+          "refId": "A",
+          "resultFormat": "time_series",
+          "alias": "[[tag_container_name]]"
         }
       ],
       "title": "Disk Write \u2014 bytes/s",
@@ -1590,7 +1740,7 @@
     "docker",
     "containers",
     "rpi",
-    "cadvisor"
+    "telegraf"
   ],
   "templating": {
     "list": [
@@ -1607,28 +1757,6 @@
         "query": "prometheus",
         "refresh": 1,
         "type": "datasource"
-      },
-      {
-        "current": {},
-        "datasource": {
-          "type": "prometheus",
-          "uid": "${prom_ds}"
-        },
-        "definition": "label_values(container_last_seen{name!=\"\",name!=\"/\",image!=\"\"},name)",
-        "hide": 0,
-        "includeAll": true,
-        "allValue": ".*",
-        "label": "Container",
-        "multi": true,
-        "name": "container",
-        "options": [],
-        "query": {
-          "query": "label_values(container_last_seen{name!=\"\",name!=\"/\",image!=\"\"},name)",
-          "refId": "A"
-        },
-        "refresh": 2,
-        "sort": 1,
-        "type": "query"
       }
     ]
   },
