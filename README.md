@@ -89,6 +89,16 @@ Internet (PPPoE CGNAT)
 - **Strong SSH crypto** — AES-CTR only, SHA1 disabled
 - **IPv6 firewall** — 8-rule defensive set (ISP is CGNAT, no global IPv6)
 
+### Monitoring Stack (Raspberry Pi 4 — 10.40.40.2)
+- **Grafana** — dashboards for all infrastructure metrics and logs
+- **Prometheus** — metrics TSDB; scrapes idrac-exporter (Redfish), SNMP exporter, mktxp, node_exporter
+- **InfluxDB** — time-series store for iDRAC SNMP/IPMI telemetry via Telegraf
+- **Loki + promtail** — log aggregation; receives MikroTik syslog (UDP 5514) and iDRAC syslog (UDP 514)
+- **idrac-exporter** — polls both iDRACs via Redfish HTTP for CPU, memory, drives, network, PSU, sensors
+- **Two Grafana dashboards** (importable JSON in `config/`):
+  - **Dell iDRAC Dual Host Command Center** — side-by-side real-time hardware telemetry for PER730XD (cyan) and PER630 (magenta): power, temps, fans, status, disks, RAID, NICs, memory modules, SEL event log, and live Loki syslog streams
+  - **Homelab Log Intelligence** — unified log analysis dashboard combining all MikroTik Loki panels (firewall, DHCP, errors, pattern search) with iDRAC Loki panels (per-host streams, audit, config changes)
+
 ### Monitoring & Alerts
 - **Netwatch** — 10 hosts monitored, beeper alerts on up/down
 - **Ethernet monitor** — beeps on link up/down (3s poll)
@@ -127,7 +137,9 @@ Internet (PPPoE CGNAT)
 ```
 homelab-network/
 ├── config/
-│   └── rb3011-config.rsc        # Complete router config (credentials redacted)
+│   ├── rb3011-config.rsc                      # Complete router config (credentials redacted)
+│   ├── grafana-idrac-command-center.json       # iDRAC Dual Host Command Center dashboard
+│   └── grafana-homelab-log-intelligence.json   # Combined log intelligence dashboard (Router + iDRAC)
 ├── aps/
 │   ├── mAP2nD-1.rsc             # mAP2nD-1 one-shot setup script
 │   └── wAP2nD-1.rsc             # wAP2nD-1 one-shot setup script
@@ -137,6 +149,7 @@ homelab-network/
 │   ├── security.md              # Firewall chains, DDoS, SSH ladder, hardening
 │   ├── beeper-alerts.md         # All alert scripts, schedulers, boot fanfare system
 │   ├── servers.md               # Server NIC bonding and network config (PER730XD, PER630)
+│   ├── monitoring.md            # Full monitoring stack — Prometheus, Loki, Grafana dashboards
 │   └── troubleshooting.md       # Common issues, RouterOS 7.22 syntax notes
 ├── servers/
 │   ├── server1-network.sh       # NetworkManager bond setup for Server1 (PER730XD)
@@ -257,6 +270,7 @@ DNS allow-remote-requests disabled, MAC server lockdown, CAP mode.
 | [network-layout.md](docs/network-layout.md) | Physical ports, VLANs, IPs, DHCP pools, inter-VLAN rules, WiFi, WAN |
 | [services.md](docs/services.md) | Pi-hole, Back to Home VPN, AMP, The Dude, USB structure, backups, SNMP |
 | [security.md](docs/security.md) | Firewall chains, DDoS, SSH brute-force ladder, port scan detection, hardening |
+| [monitoring.md](docs/monitoring.md) | Prometheus, Loki, Grafana dashboards, log pipeline, InfluxDB schema |
 | [beeper-alerts.md](docs/beeper-alerts.md) | All alert scripts, schedulers, netwatch table, boot fanfare system |
 | [servers.md](docs/servers.md) | Server NIC bonding, NetworkManager setup, iDRAC config, failover testing |
 | [troubleshooting.md](docs/troubleshooting.md) | Common issues, CAPsMAN tips, RouterOS 7.22 syntax notes, beeper gotchas |
