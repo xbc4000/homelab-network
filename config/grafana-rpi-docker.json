@@ -104,7 +104,8 @@
         },
         "showPercentChange": false,
         "textMode": "auto",
-        "wideLayout": true
+        "wideLayout": true,
+        "noValue": "0"
       },
       "pluginVersion": "12.4.2",
       "targets": [
@@ -236,7 +237,8 @@
         },
         "showPercentChange": false,
         "textMode": "auto",
-        "wideLayout": true
+        "wideLayout": true,
+        "noValue": "0"
       },
       "pluginVersion": "12.4.2",
       "targets": [
@@ -764,7 +766,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Net RX/s"
+              "options": "Net RX"
             },
             "properties": [
               {
@@ -773,7 +775,7 @@
               },
               {
                 "id": "unit",
-                "value": "Bps"
+                "value": "bytes"
               },
               {
                 "id": "custom.align",
@@ -797,7 +799,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Net TX/s"
+              "options": "Net TX"
             },
             "properties": [
               {
@@ -806,7 +808,7 @@
               },
               {
                 "id": "unit",
-                "value": "Bps"
+                "value": "bytes"
               },
               {
                 "id": "custom.align",
@@ -940,7 +942,7 @@
             "type": "influxdb",
             "uid": "bfecel4s1xpfke"
           },
-          "query": "SELECT non_negative_derivative(last(\"rx_bytes\"),1s) FROM \"docker_container_net\" WHERE $timeFilter GROUP BY \"container_name\" ORDER BY time DESC LIMIT 1",
+          "query": "SELECT last(\"rx_bytes\") FROM \"docker_container_net\" WHERE $timeFilter GROUP BY \"container_name\" ORDER BY time DESC LIMIT 1",
           "rawQuery": true,
           "refId": "NetRX",
           "resultFormat": "table",
@@ -951,7 +953,7 @@
             "type": "influxdb",
             "uid": "bfecel4s1xpfke"
           },
-          "query": "SELECT non_negative_derivative(last(\"tx_bytes\"),1s) FROM \"docker_container_net\" WHERE $timeFilter GROUP BY \"container_name\" ORDER BY time DESC LIMIT 1",
+          "query": "SELECT last(\"tx_bytes\") FROM \"docker_container_net\" WHERE $timeFilter GROUP BY \"container_name\" ORDER BY time DESC LIMIT 1",
           "rawQuery": true,
           "refId": "NetTX",
           "resultFormat": "table",
@@ -990,8 +992,8 @@
               "Value #CPU": "CPU %",
               "Value #Mem": "Memory",
               "Value #MemPct": "Mem %",
-              "Value #NetRX": "Net RX/s",
-              "Value #NetTX": "Net TX/s",
+              "Value #NetRX": "Net RX",
+              "Value #NetTX": "Net TX",
               "Value #Uptime": "Uptime",
               "Metric": "Container"
             }
