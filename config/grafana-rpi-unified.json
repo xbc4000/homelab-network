@@ -1163,16 +1163,19 @@
           "color": {
             "mode": "thresholds"
           },
+          "decimals": 1,
           "mappings": [],
+          "max": 85,
+          "min": 20,
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              {
-                "color": "rgb(255,184,0)",
-                "value": 0
-              }
+              {"color": "rgb(0,255,136)", "value": 0},
+              {"color": "rgb(255,184,0)", "value": 60},
+              {"color": "rgb(255,7,58)", "value": 75}
             ]
-          }
+          },
+          "unit": "celsius"
         },
         "overrides": []
       },
@@ -1184,11 +1187,9 @@
       },
       "id": 16,
       "options": {
-        "displayMode": "lcd",
-        "minVizHeight": 10,
-        "minVizWidth": 0,
-        "namePlacement": "auto",
-        "orientation": "horizontal",
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -1196,9 +1197,8 @@
           "fields": "",
           "values": false
         },
-        "showUnfilled": true,
-        "sizing": "auto",
-        "valueMode": "color"
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
       },
       "pluginVersion": "12.4.2",
       "targets": [
@@ -1207,37 +1207,15 @@
             "type": "prometheus",
             "uid": "${prom_ds}"
           },
-          "expr": "irate(node_pressure_cpu_waiting_seconds_total{job=\"node_exporter\"}[1m])",
+          "expr": "node_hwmon_temp_celsius{job=\"node_exporter\",chip=~\"thermal.*\"}",
           "refId": "A",
-          "legendFormat": "CPU",
-          "instant": false,
-          "range": true
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${prom_ds}"
-          },
-          "expr": "irate(node_pressure_memory_waiting_seconds_total{job=\"node_exporter\"}[1m])",
-          "refId": "B",
-          "legendFormat": "Memory",
-          "instant": false,
-          "range": true
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${prom_ds}"
-          },
-          "expr": "irate(node_pressure_io_waiting_seconds_total{job=\"node_exporter\"}[1m])",
-          "refId": "C",
-          "legendFormat": "I/O",
+          "legendFormat": "CPU Temp",
           "instant": false,
           "range": true
         }
       ],
-      "title": "System Pressure",
-      "type": "bargauge"
+      "title": "CPU Temperature \u00b0C",
+      "type": "gauge"
     },
     {
       "datasource": {
