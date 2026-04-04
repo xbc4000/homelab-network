@@ -27,7 +27,7 @@
       "keepTime": false,
       "tags": [],
       "targetBlank": true,
-      "title": "🔗 iDRAC1 — PER730XD (10.30.30.10)",
+      "title": "\ud83d\udd17 iDRAC1 \u2014 PER730XD (10.30.30.10)",
       "tooltip": "Open PER730XD iDRAC web UI",
       "type": "link",
       "url": "https://10.30.30.10"
@@ -39,7 +39,7 @@
       "keepTime": false,
       "tags": [],
       "targetBlank": true,
-      "title": "🔗 iDRAC2 — PER630 (10.30.30.11)",
+      "title": "\ud83d\udd17 iDRAC2 \u2014 PER630 (10.30.30.11)",
       "tooltip": "Open PER630 iDRAC web UI",
       "type": "link",
       "url": "https://10.30.30.11"
@@ -56,7 +56,7 @@
       },
       "id": 1,
       "panels": [],
-      "title": "⚡ MIKROTIK RB3011 — ROUTER INTELLIGENCE",
+      "title": "\u26a1 MIKROTIK RB3011 \u2014 ROUTER INTELLIGENCE",
       "type": "row"
     },
     {
@@ -582,7 +582,7 @@
       },
       "id": 9,
       "panels": [],
-      "title": "🔥 FIREWALL ANALYSIS",
+      "title": "\ud83d\udd25 FIREWALL ANALYSIS",
       "type": "row"
     },
     {
@@ -941,7 +941,7 @@
           "refId": "A"
         }
       ],
-      "title": "🔥 Firewall Event Stream",
+      "title": "\ud83d\udd25 Firewall Event Stream",
       "type": "logs"
     },
     {
@@ -954,7 +954,7 @@
       },
       "id": 15,
       "panels": [],
-      "title": "📡 DHCP LEASES & NETWORK",
+      "title": "\ud83d\udce1 DHCP LEASES & NETWORK",
       "type": "row"
     },
     {
@@ -1046,7 +1046,8 @@
               }
             ]
           },
-          "unit": "short"
+          "unit": "short",
+          "noValue": "0"
         },
         "overrides": []
       },
@@ -1074,7 +1075,8 @@
         "showPercentChange": false,
         "text": {},
         "textMode": "auto",
-        "wideLayout": true
+        "wideLayout": true,
+        "noValue": "0"
       },
       "pluginVersion": "12.4.2",
       "targets": [
@@ -1084,13 +1086,13 @@
             "uid": "${loki_ds}"
           },
           "editorMode": "code",
-          "expr": "sum(count_over_time({job=\"syslog\", routerboard=\"$routerboard\"} |~ \"dhcp\" |~ \"renew|offer|ack\" [$__interval]))",
+          "expr": "sum(count_over_time({job=\"syslog\", routerboard=\"$routerboard\"} |~ \"dhcp\" |~ \"deassigned\" [$__interval]))",
           "legendFormat": "",
           "queryType": "range",
           "refId": "A"
         }
       ],
-      "title": "DHCP Renewals & Offers",
+      "title": "DHCP Deassignments",
       "type": "stat"
     },
     {
@@ -1235,7 +1237,7 @@
           "refId": "A"
         }
       ],
-      "title": "📡 DHCP Event Stream",
+      "title": "\ud83d\udce1 DHCP Event Stream",
       "type": "logs"
     },
     {
@@ -1248,7 +1250,7 @@
       },
       "id": 20,
       "panels": [],
-      "title": "🔐 AUTH & ACCOUNT SECURITY",
+      "title": "\ud83d\udd10 AUTH & ACCOUNT SECURITY",
       "type": "row"
     },
     {
@@ -1346,7 +1348,8 @@
               }
             ]
           },
-          "unit": "short"
+          "unit": "short",
+          "noValue": "0"
         },
         "overrides": []
       },
@@ -1374,7 +1377,8 @@
         "showPercentChange": false,
         "text": {},
         "textMode": "auto",
-        "wideLayout": true
+        "wideLayout": true,
+        "noValue": "0"
       },
       "pluginVersion": "12.4.2",
       "targets": [
@@ -1384,7 +1388,7 @@
             "uid": "${loki_ds}"
           },
           "editorMode": "code",
-          "expr": "sum(count_over_time({job=\"syslog\", routerboard=\"$routerboard\"} |~ \"account\" |~ \"failure|wrong|invalid|incorrect\" [$__interval]))",
+          "expr": "sum(count_over_time({job=\"syslog\", routerboard=\"$routerboard\"} |~ \"login failure\" [$__interval]))",
           "legendFormat": "",
           "queryType": "range",
           "refId": "A"
@@ -1606,7 +1610,7 @@
           "refId": "A"
         }
       ],
-      "title": "🔐 Auth & Account Event Stream",
+      "title": "\ud83d\udd10 Auth & Account Event Stream",
       "type": "logs"
     },
     {
@@ -1619,7 +1623,7 @@
       },
       "id": 26,
       "panels": [],
-      "title": "📶 WIRELESS — CAPSMAN",
+      "title": "\ud83d\udcf6 WIRELESS \u2014 CAPSMAN",
       "type": "row"
     },
     {
@@ -1975,7 +1979,7 @@
           "refId": "A"
         }
       ],
-      "title": "📶 CAPsMAN / Wireless Event Stream",
+      "title": "\ud83d\udcf6 CAPsMAN / Wireless Event Stream",
       "type": "logs"
     },
     {
@@ -1988,7 +1992,7 @@
       },
       "id": 32,
       "panels": [],
-      "title": "⚙️ SYSTEM & SCRIPTS",
+      "title": "\u2699\ufe0f SYSTEM & SCRIPTS",
       "type": "row"
     },
     {
@@ -2034,7 +2038,7 @@
           "refId": "A"
         }
       ],
-      "title": "⚙️ System Events",
+      "title": "\u2699\ufe0f System Events",
       "type": "logs"
     },
     {
@@ -2080,7 +2084,7 @@
           "refId": "A"
         }
       ],
-      "title": "📜 Script Events",
+      "title": "\ud83d\udcdc Script Events",
       "type": "logs"
     },
     {
@@ -2093,7 +2097,7 @@
       },
       "id": 35,
       "panels": [],
-      "title": "🌐 DNS & INTERFACE EVENTS",
+      "title": "\ud83c\udf10 DNS & INTERFACE EVENTS",
       "type": "row"
     },
     {
@@ -2139,7 +2143,7 @@
           "refId": "A"
         }
       ],
-      "title": "🌐 DNS Events",
+      "title": "\ud83c\udf10 DNS Events",
       "type": "logs"
     },
     {
@@ -2185,7 +2189,7 @@
           "refId": "A"
         }
       ],
-      "title": "🔌 Interface & Link Events",
+      "title": "\ud83d\udd0c Interface & Link Events",
       "type": "logs"
     },
     {
@@ -2198,7 +2202,7 @@
       },
       "id": 38,
       "panels": [],
-      "title": "📋 FULL SEARCHABLE LOG STREAM",
+      "title": "\ud83d\udccb FULL SEARCHABLE LOG STREAM",
       "type": "row"
     },
     {
@@ -2244,7 +2248,7 @@
           "refId": "A"
         }
       ],
-      "title": "All Router Logs — Filtered",
+      "title": "All Router Logs \u2014 Filtered",
       "type": "logs"
     },
     {
@@ -2257,7 +2261,7 @@
       },
       "id": 40,
       "panels": [],
-      "title": "🖥️ iDRAC SYSLOG — LOG INTELLIGENCE",
+      "title": "\ud83d\udda5\ufe0f iDRAC SYSLOG \u2014 LOG INTELLIGENCE",
       "type": "row"
     },
     {
@@ -2307,7 +2311,7 @@
           "refId": "A"
         }
       ],
-      "title": "📊 Total Events",
+      "title": "\ud83d\udcca Total Events",
       "type": "stat"
     },
     {
@@ -2357,7 +2361,7 @@
           "refId": "A"
         }
       ],
-      "title": "🔴 Critical",
+      "title": "\ud83d\udd34 Critical",
       "type": "stat"
     },
     {
@@ -2407,7 +2411,7 @@
           "refId": "A"
         }
       ],
-      "title": "🟠 Warning",
+      "title": "\ud83d\udfe0 Warning",
       "type": "stat"
     },
     {
@@ -2457,7 +2461,7 @@
           "refId": "A"
         }
       ],
-      "title": "🟢 Informational",
+      "title": "\ud83d\udfe2 Informational",
       "type": "stat"
     },
     {
@@ -2507,7 +2511,7 @@
           "refId": "A"
         }
       ],
-      "title": "🔑 Audit",
+      "title": "\ud83d\udd11 Audit",
       "type": "stat"
     },
     {
@@ -2557,7 +2561,7 @@
           "refId": "A"
         }
       ],
-      "title": "⚙️ Configuration",
+      "title": "\u2699\ufe0f Configuration",
       "type": "stat"
     },
     {
@@ -2613,7 +2617,7 @@
           "refId": "A"
         }
       ],
-      "title": "📊 Log Volume by Host",
+      "title": "\ud83d\udcca Log Volume by Host",
       "type": "timeseries"
     },
     {
@@ -2683,7 +2687,7 @@
           "refId": "C"
         }
       ],
-      "title": "📈 Events by Severity",
+      "title": "\ud83d\udcc8 Events by Severity",
       "type": "timeseries"
     },
     {
@@ -2722,7 +2726,7 @@
           "refId": "A"
         }
       ],
-      "title": "🚨 Critical & Warning Alerts — Both Hosts",
+      "title": "\ud83d\udea8 Critical & Warning Alerts \u2014 Both Hosts",
       "type": "logs"
     },
     {
@@ -2761,7 +2765,7 @@
           "refId": "A"
         }
       ],
-      "title": "📋 iDRAC Syslog — PER730XD (Server1)",
+      "title": "\ud83d\udccb iDRAC Syslog \u2014 PER730XD (Server1)",
       "type": "logs"
     },
     {
@@ -2800,7 +2804,7 @@
           "refId": "A"
         }
       ],
-      "title": "📋 iDRAC Syslog — PER630 (Server2)",
+      "title": "\ud83d\udccb iDRAC Syslog \u2014 PER630 (Server2)",
       "type": "logs"
     },
     {
@@ -2839,7 +2843,7 @@
           "refId": "A"
         }
       ],
-      "title": "🔑 Audit & Auth Events",
+      "title": "\ud83d\udd11 Audit & Auth Events",
       "type": "logs"
     },
     {
@@ -2878,7 +2882,7 @@
           "refId": "A"
         }
       ],
-      "title": "⚙️ Configuration & Storage Events",
+      "title": "\u2699\ufe0f Configuration & Storage Events",
       "type": "logs"
     },
     {
@@ -2917,7 +2921,7 @@
           "refId": "A"
         }
       ],
-      "title": "📋 Full iDRAC Syslog Stream — All Hosts",
+      "title": "\ud83d\udccb Full iDRAC Syslog Stream \u2014 All Hosts",
       "type": "logs"
     }
   ],
@@ -3056,7 +3060,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Homelab Log Intelligence — Router & iDRAC",
+  "title": "Homelab Log Intelligence \u2014 Router & iDRAC",
   "uid": "homelab-log-intelligence",
   "version": 3,
   "weekStart": ""
